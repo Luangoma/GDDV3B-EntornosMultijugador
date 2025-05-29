@@ -158,8 +158,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 312a90f3167a5de4ba1d0027d4f7fd8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  CoinsCollected: 0
+  CoinsCollected:
+    m_InternalValue: 0
   isZombie: 0
+  uniqueID: 
   moveSpeed: 5
   zombieSpeedModifier: 0.8
   animator: {fileID: 5266923850224609321}

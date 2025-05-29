@@ -1,6 +1,9 @@
+using System;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UIElements;
 
 public class PlayerController : NetworkBehaviour
 {
@@ -26,14 +29,14 @@ public class PlayerController : NetworkBehaviour
     void Start()
     {
         // Si no eres owner vemos si tienes una camara activa y la quitamos
-        if (!IsOwner)
-        {
-            if (cameraTransform != null)
-            {
-                cameraTransform.gameObject.SetActive(false);
-            }
-            return;
-        }
+        //if (!IsOwner)
+        //{
+        //    if (cameraTransform != null)
+        //    {
+        //        cameraTransform.gameObject.SetActive(false);
+        //    }
+        //    return;
+        //}
 
         // Buscar el objeto "CanvasPlayer" en la escena
         GameObject canvas = GameObject.Find("CanvasPlayer");
@@ -61,7 +64,10 @@ public class PlayerController : NetworkBehaviour
     void Update()
     {
         // El jugador solamente controla su personaje
-        if (!IsOwner) { return; }
+        if (!IsOwner) {
+            Debug.Log("NO me esta dejando controlar a este jugador !!!!!!");
+            return; 
+        }
 
         // Leer entrada del teclado
         horizontalInput = Input.GetAxis("Horizontal");
@@ -93,7 +99,11 @@ public class PlayerController : NetworkBehaviour
             float adjustedSpeed = isZombie ? moveSpeed * zombieSpeedModifier : moveSpeed;
 
             // Mover al jugador en la dirección deseada
-            transform.Translate(moveDirection * adjustedSpeed * Time.deltaTime, Space.World);
+            //transform.Translate(moveDirection * adjustedSpeed * Time.deltaTime, Space.World);
+            if (moveDirection.magnitude > 0.01f)
+            {
+                SubmitMovementServerRpc(moveDirection * adjustedSpeed * Time.deltaTime);
+            }
         }
     }
 
@@ -116,9 +126,15 @@ public class PlayerController : NetworkBehaviour
     {
         if (coinText != null)
         {
-            coinText.text = $"{CoinsCollected}";
+            coinText.text = $"{CoinsCollected.Value}";
         }
     }
+    
+    public void MoveWASD() { 
+        
+    }
+
+    
 
     // Metodo para que el servidor reciba que se ha cogido una moneda adicional
     [ServerRpc]
@@ -128,13 +144,24 @@ public class PlayerController : NetworkBehaviour
         UpdateCoinOnlineClientRpc(CoinsCollected.Value);
         UpdateCoinUI();
     }
+
     // Metodo que se llamara cuando el servidor mande un mensajito
+    // Transferir la nueva data de las monedas a todas las interfaces
+    // Porque en teoria las interfaces no son comunes
     [ClientRpc]
     void UpdateCoinOnlineClientRpc(int coins)
     {
         CoinsCollected.Value = coins;
         UpdateCoinUI();
     }
-    
+
+    // Actualizar del movimiento del personaje al servidor en tiempo real
+    [ServerRpc]
+    private void SubmitMovementServerRpc(Vector3 moveVector)
+    {
+        transform.position += moveVector;
+    }
+
+
 }
 
