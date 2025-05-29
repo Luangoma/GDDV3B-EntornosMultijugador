@@ -1,12 +1,14 @@
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 
-public class PlayerController : MonoBehaviour
+public class PlayerController : NetworkBehaviour
 {
     private TextMeshProUGUI coinText;
 
     [Header("Stats")]
-    public int CoinsCollected = 0;
+    // Ahora es variable compartida -- En un foro vi cosas de permisos como NetworkVariableReading.everyone o algo asi
+    public NetworkVariable<int> CoinsCollected =new NetworkVariable<int> (0);
 
     [Header("Character settings")]
     public bool isZombie = false; // Añadir una propiedad para el estado del jugador
@@ -23,6 +25,16 @@ public class PlayerController : MonoBehaviour
 
     void Start()
     {
+        // Si no eres owner vemos si tienes una camara activa y la quitamos
+        if (!IsOwner)
+        {
+            if (cameraTransform != null)
+            {
+                cameraTransform.gameObject.SetActive(false);
+            }
+            return;
+        }
+
         // Buscar el objeto "CanvasPlayer" en la escena
         GameObject canvas = GameObject.Find("CanvasPlayer");
 
@@ -48,6 +60,9 @@ public class PlayerController : MonoBehaviour
 
     void Update()
     {
+        // El jugador solamente controla su personaje
+        if (!IsOwner) { return; }
+
         // Leer entrada del teclado
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
@@ -92,7 +107,7 @@ public class PlayerController : MonoBehaviour
     {
         if (!isZombie) // Solo los humanos pueden recoger monedas
         {
-            this.CoinsCollected++;
+            CoinsCollected.Value++;
             UpdateCoinUI();
         }
     }
@@ -103,6 +118,23 @@ public class PlayerController : MonoBehaviour
         {
             coinText.text = $"{CoinsCollected}";
         }
+    }
+
+    // Metodo que se llamara cuando el servidor mande un mensajito
+    [ClientRpc]
+    void UpdateCoinOnline(int coins)
+    {
+        CoinsCollected.Value = coins;
+        UpdateCoinUI();
+    }
+
+    // Metodo para que el servidor reciba que se ha cogido una moneda adicional
+    [ServerRpc]
+    public void coinCollected() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
+    {
+        CoinsCollected.Value++;
+        UpdateCoinOnline(CoinsCollected.Value);
+        UpdateCoinUI();
     }
 }
 
