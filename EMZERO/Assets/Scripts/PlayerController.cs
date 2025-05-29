@@ -120,21 +120,21 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    // Metodo para que el servidor reciba que se ha cogido una moneda adicional
+    [ServerRpc]
+    public void coinCollectedServerRpc() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
+    {
+        CoinsCollected.Value++;
+        UpdateCoinOnlineClientRpc(CoinsCollected.Value);
+        UpdateCoinUI();
+    }
     // Metodo que se llamara cuando el servidor mande un mensajito
     [ClientRpc]
-    void UpdateCoinOnline(int coins)
+    void UpdateCoinOnlineClientRpc(int coins)
     {
         CoinsCollected.Value = coins;
         UpdateCoinUI();
     }
-
-    // Metodo para que el servidor reciba que se ha cogido una moneda adicional
-    [ServerRpc]
-    public void coinCollected() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
-    {
-        CoinsCollected.Value++;
-        UpdateCoinOnline(CoinsCollected.Value);
-        UpdateCoinUI();
-    }
+    
 }
 

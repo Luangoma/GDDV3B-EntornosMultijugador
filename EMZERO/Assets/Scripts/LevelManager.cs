@@ -452,7 +452,7 @@ public class LevelManager : MonoBehaviour
         if (gameModeText != null && playerController != null)
         {
             gameModeText.text = $"{playerController.CoinsCollected}/{CoinsGenerated}";
-            if (playerController.CoinsCollected == CoinsGenerated)
+            if (playerController.CoinsCollected.Value == CoinsGenerated)
             {
                 isGameOver = true;
             }
