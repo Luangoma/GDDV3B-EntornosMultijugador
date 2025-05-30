@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -11,7 +12,7 @@ public enum GameMode
     Monedas
 }
 
-public class LevelManager : MonoBehaviour
+public class LevelManager : NetworkBehaviour
 {
     #region Properties
 

@@ -65,7 +65,7 @@ public class PlayerController : NetworkBehaviour
     {
         // El jugador solamente controla su personaje
         if (!IsOwner) {
-            Debug.Log("NO me esta dejando controlar a este jugador !!!!!!");
+            //Debug.Log("NO me esta dejando controlar a este jugador !!!!!!");
             return; 
         }
 
@@ -91,6 +91,7 @@ public class PlayerController : NetworkBehaviour
         // Mover el jugador usando el Transform
         if (moveDirection != Vector3.zero)
         {
+            Debug.Log("Puedo controlar a este jugador !!!!!!");
             // Calcular la rotación en Y basada en la dirección del movimiento
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
             transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 720f * Time.deltaTime);

@@ -927,6 +927,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: character-orc
       objectReference: {fileID: 0}
+    - target: {fileID: 8480700492446077294, guid: 42625083221c5f4428e9a69d2f9deef2, type: 3}
+      propertyPath: GlobalObjectIdHash
+      value: 1189182751
+      objectReference: {fileID: 0}
+    - target: {fileID: 8480700492446077294, guid: 42625083221c5f4428e9a69d2f9deef2, type: 3}
+      propertyPath: InScenePlacedSourceGlobalObjectIdHash
+      value: 2711039983
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
@@ -1180,7 +1188,7 @@ MonoBehaviour:
   ConnectionData:
     Address: 127.0.0.1
     Port: 7777
-    ServerListenAddress: 
+    ServerListenAddress: 127.0.0.1
   DebugSimulator:
     PacketDelayMS: 0
     PacketJitterMS: 0
@@ -1200,7 +1208,7 @@ MonoBehaviour:
   NetworkConfig:
     ProtocolVersion: 0
     NetworkTransport: {fileID: 1971345241}
-    PlayerPrefab: {fileID: 8947290730586645348, guid: cb4f2926f9ddb634fb81430a923273a9, type: 3}
+    PlayerPrefab: {fileID: 0}
     Prefabs:
       NetworkPrefabsLists:
       - {fileID: 11400000, guid: b5c626004e79d0f4e91388ef0febd497, type: 2}

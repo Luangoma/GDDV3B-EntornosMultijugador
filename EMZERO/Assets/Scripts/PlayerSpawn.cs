@@ -21,7 +21,7 @@ public class PlayerSpawn : NetworkBehaviour
     void Update()
     {
         // Movimiento random 
-        transform.position = Position.Value;
+        //transform.position = Position.Value;
     }
     public void MoveRandom()
     {
@@ -46,8 +46,8 @@ public class PlayerSpawn : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void SubmitPositionRequestRpc(RpcParams rpcParams = default)
     {
-        var startPoint = new UnityEngine.Vector3(3,1,4);
-        transform.position = new UnityEngine.Vector3(3, 1, 4);
-        Position.Value = new UnityEngine.Vector3(3, 1, 4);
+        var startPoint = new UnityEngine.Vector3(3f,1f,4f);
+        transform.position = new UnityEngine.Vector3(3f, 1f, 4f);
+        Position.Value = new UnityEngine.Vector3(3f, 1f, 4f);
     }
 }
