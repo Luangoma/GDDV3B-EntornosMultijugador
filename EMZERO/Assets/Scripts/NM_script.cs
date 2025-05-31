@@ -57,12 +57,12 @@ namespace HelloWorld
                 if (m_NetworkManager.IsServer && !m_NetworkManager.IsClient)
                 {
                     foreach (ulong uid in m_NetworkManager.ConnectedClientsIds)
-                        m_NetworkManager.SpawnManager.GetPlayerNetworkObject(uid).GetComponent<PlayerSpawn>().MoveRandom();
+                        m_NetworkManager.SpawnManager.GetPlayerNetworkObject(uid).GetComponent<PlayerController>().MoveRandom();
                 }
                 else
                 {
                     var playerObject = m_NetworkManager.SpawnManager.GetLocalPlayerObject();
-                    var player = playerObject.GetComponent<PlayerSpawn>();
+                    var player = playerObject.GetComponent<PlayerController>();
                     player.MoveRandom();
                 }
             }

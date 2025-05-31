@@ -8,6 +8,7 @@ using UnityEngine.UIElements;
 public class PlayerController : NetworkBehaviour
 {
     private TextMeshProUGUI coinText;
+    private NetworkManager p_NetworkManager;
 
     [Header("Stats")]
     // Ahora es variable compartida -- En un foro vi cosas de permisos como NetworkVariableReading.everyone o algo asi
@@ -26,9 +27,29 @@ public class PlayerController : NetworkBehaviour
     private float horizontalInput;         // Entrada horizontal (A/D o flechas)
     private float verticalInput;           // Entrada vertical (W/S o flechas)
 
+    // Metodo cutre preliminar que asigna el contolador del host a uno de los jugadores ya instanciados
+    public override void OnNetworkSpawn()
+    {
+        if (IsHost && IsServer)
+        {
+            PlayerController[] players = FindObjectsOfType<PlayerController>();
+
+            foreach (var player in players)
+            {
+                if (!player.NetworkObject.IsOwnedByServer)
+                {
+                    // El NetworkManager.Singleton creo que va a haber que usarle mucho, porque es el equivalente al m_NetworkManager del NM_script
+                    player.NetworkObject.ChangeOwnership(NetworkManager.Singleton.LocalClientId);
+                    player.isZombie = false;
+                    break;
+                }
+            }
+        }
+    }
+
     void Start()
     {
-        // Si no eres owner vemos si tienes una camara activa y la quitamos
+        //Si no eres owner vemos si tienes una camara activa y la quitamos
         //if (!IsOwner)
         //{
         //    if (cameraTransform != null)
@@ -37,6 +58,11 @@ public class PlayerController : NetworkBehaviour
         //    }
         //    return;
         //}
+        if (!IsClient && !IsServer)
+        {
+            cameraTransform = Camera.main.transform;
+        }
+
 
         // Buscar el objeto "CanvasPlayer" en la escena
         GameObject canvas = GameObject.Find("CanvasPlayer");
@@ -64,11 +90,12 @@ public class PlayerController : NetworkBehaviour
     void Update()
     {
         // El jugador solamente controla su personaje
-        if (!IsOwner) {
-            //Debug.Log("NO me esta dejando controlar a este jugador !!!!!!");
-            return; 
+        if (!IsOwner)
+        {
+            return;
         }
-
+        //Debug.Log("NO me esta dejando controlar a este jugador !!!!!!");
+        Debug.Log("puedo moverme");
         // Leer entrada del teclado
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
@@ -79,11 +106,11 @@ public class PlayerController : NetworkBehaviour
         // Manejar las animaciones del jugador
         HandleAnimations();
     }
-
     void MovePlayer()
     {
+        Debug.Log("1");
         if (cameraTransform == null) { return; }
-
+        Debug.Log("2");
         // Calcular la dirección de movimiento en relación a la cámara
         Vector3 moveDirection = (cameraTransform.forward * verticalInput + cameraTransform.right * horizontalInput).normalized;
         moveDirection.y = 0f; // Asegurarnos de que el movimiento es horizontal (sin componente Y)
@@ -130,13 +157,19 @@ public class PlayerController : NetworkBehaviour
             coinText.text = $"{CoinsCollected.Value}";
         }
     }
-    
-    public void MoveWASD() { 
-        
+
+    public void spawnFirstTime()
+    {
+        SubmitPositionRequestRpc();
     }
 
-    
-
+    [Rpc(SendTo.Server)]
+    private void SubmitPositionRequestRpc(RpcParams rpcParams = default)
+    {
+        var startPoint = new UnityEngine.Vector3(3f, 1f, 4f);
+        transform.position = new UnityEngine.Vector3(3f, 1f, 4f);
+        //Position.Value = new UnityEngine.Vector3(3f, 1f, 4f);
+    }
     // Metodo para que el servidor reciba que se ha cogido una moneda adicional
     [ServerRpc]
     public void coinCollectedServerRpc() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
@@ -163,6 +196,27 @@ public class PlayerController : NetworkBehaviour
         transform.position += moveVector;
     }
 
+
+
+    /// <summary>
+    /// Temporal para pruebas ! ! ! ! ! !  ! ! ! ! ! ! !  ! ! ! !  ! 
+    /// </summary>
+    public void MoveRandom()
+    {
+        SubmitPositionRandomRequestRpc();
+    }
+    static Vector3 GetRandomPositionOnPlane()
+    {
+        return new Vector3(UnityEngine.Random.Range(-3f, 3f), 1f, UnityEngine.Random.Range(-3f, 3f));
+    }
+
+    [Rpc(SendTo.Server)]
+    private void SubmitPositionRandomRequestRpc(RpcParams rpcParams = default)
+    {
+        var randomPosition = GetRandomPositionOnPlane();
+        transform.position = randomPosition;
+        //Position.Value = randomPosition;
+    }
 
 }
 
