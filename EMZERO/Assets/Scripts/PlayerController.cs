@@ -27,10 +27,11 @@ public class PlayerController : NetworkBehaviour
     private float horizontalInput;         // Entrada horizontal (A/D o flechas)
     private float verticalInput;           // Entrada vertical (W/S o flechas)
 
+
     // Metodo cutre preliminar que asigna el contolador del host a uno de los jugadores ya instanciados
     public override void OnNetworkSpawn()
     {
-        if (IsHost && IsServer)
+        if (IsHost)
         {
             PlayerController[] players = FindObjectsOfType<PlayerController>();
 
@@ -42,6 +43,10 @@ public class PlayerController : NetworkBehaviour
                     player.NetworkObject.ChangeOwnership(NetworkManager.Singleton.LocalClientId);
                     player.isZombie = false;
                     break;
+                }
+                else { 
+                    // Crear un nuevo player jugable
+                    
                 }
             }
         }

@@ -12,7 +12,7 @@ public enum GameMode
     Monedas
 }
 
-public class LevelManager : NetworkBehaviour
+public class LevelManager : MonoBehaviour
 {
     #region Properties
 
@@ -56,6 +56,13 @@ public class LevelManager : NetworkBehaviour
     private bool isGameOver = false;
 
     public GameObject gameOverPanel; // Asigna el panel desde el inspector
+
+    // Un tipo de variable especial, del cual no se puede leer hasta que el servidor lo actualice
+    public NetworkVariable<int> playerNumber = new NetworkVariable<int>(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
 
     #endregion
 
@@ -364,9 +371,15 @@ public class LevelManager : NetworkBehaviour
     private void SpawnTeams()
     {
         Debug.Log("Instanciando equipos");
+
+        // Volver si no quedan puentos de spawn
         if (humanSpawnPoints.Count <= 0) { return; }
+
+        // Cada cliente hace spawn de un protagonista que solo el podrá controlar
+
         SpawnPlayer(humanSpawnPoints[0], playerPrefab);
         Debug.Log($"Personaje jugable instanciado en {humanSpawnPoints[0]}");
+
 
         for (int i = 1; i < numberOfHumans; i++)
         {
