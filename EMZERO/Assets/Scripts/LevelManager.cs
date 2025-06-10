@@ -63,6 +63,7 @@ public class LevelManager : MonoBehaviour
         NetworkVariableReadPermission.Everyone,
         NetworkVariableWritePermission.Server
     );
+    private Action<ulong> HandleClientConnected;
 
     #endregion
 
@@ -83,6 +84,10 @@ public class LevelManager : MonoBehaviour
 
     private void Start()
     {
+        if (NetworkManager.Singleton.IsServer)
+        {
+            //NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
+        }
         Debug.Log("Iniciando el nivel");
         // Buscar el objeto "CanvasPlayer" en la escena
         GameObject canvas = GameObject.Find("CanvasPlayer");
@@ -385,7 +390,7 @@ public class LevelManager : MonoBehaviour
         {
             if (i < humanSpawnPoints.Count)
             {
-                SpawnNonPlayableCharacter(playerPrefab, humanSpawnPoints[i]);
+                //SpawnNonPlayableCharacter(playerPrefab, humanSpawnPoints[i]);
             }
         }
 
@@ -393,7 +398,7 @@ public class LevelManager : MonoBehaviour
         {
             if (i < zombieSpawnPoints.Count)
             {
-                SpawnNonPlayableCharacter(zombiePrefab, zombieSpawnPoints[i]);
+                //SpawnNonPlayableCharacter(zombiePrefab, zombieSpawnPoints[i]);
             }
         }
     }
@@ -413,7 +418,14 @@ public class LevelManager : MonoBehaviour
             Debug.Log($"Personaje no jugable instanciado en {spawnPosition}");
         }
     }
+    public void OnClientConnectedCallback(ulong clientId)
+    {
+        //Vector3 spawnPos = GetNextSpawnPoint(); // o lo que uses
+        //GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
 
+        //NetworkObject netObj = player.GetComponent<NetworkObject>();
+        //netObj.SpawnAsPlayerObject(clientId); // Este jugador será controlado por clientId
+    }
     private void UpdateTeamUI()
     {
         if (humansText != null)

@@ -8,11 +8,10 @@ using UnityEngine.UIElements;
 public class PlayerController : NetworkBehaviour
 {
     private TextMeshProUGUI coinText;
-    private NetworkManager p_NetworkManager;
 
     [Header("Stats")]
     // Ahora es variable compartida -- En un foro vi cosas de permisos como NetworkVariableReading.everyone o algo asi
-    public NetworkVariable<int> CoinsCollected =new NetworkVariable<int> (0);
+    public NetworkVariable<int> CoinsCollected = new NetworkVariable<int> (0);
 
     [Header("Character settings")]
     public bool isZombie = false; // Añadir una propiedad para el estado del jugador
@@ -21,51 +20,78 @@ public class PlayerController : NetworkBehaviour
     [Header("Movement Settings")]
     public float moveSpeed = 5f;           // Velocidad de movimiento
     public float zombieSpeedModifier = 0.8f; // Modificador de velocidad para zombies
-    public Animator animator;              // Referencia al Animator
+    public Animator animator;                   // Referencia al Animator
     public Transform cameraTransform;      // Referencia a la cámara
 
     private float horizontalInput;         // Entrada horizontal (A/D o flechas)
     private float verticalInput;           // Entrada vertical (W/S o flechas)
 
+    public NetworkVariable<Quaternion> Rotation = new NetworkVariable<Quaternion>();
 
-    // Metodo cutre preliminar que asigna el contolador del host a uno de los jugadores ya instanciados
+    public NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
+
     public override void OnNetworkSpawn()
     {
-        if (IsHost)
+        if (IsOwner)
         {
-            PlayerController[] players = FindObjectsOfType<PlayerController>();
-
-            foreach (var player in players)
-            {
-                if (!player.NetworkObject.IsOwnedByServer)
-                {
-                    // El NetworkManager.Singleton creo que va a haber que usarle mucho, porque es el equivalente al m_NetworkManager del NM_script
-                    player.NetworkObject.ChangeOwnership(NetworkManager.Singleton.LocalClientId);
-                    player.isZombie = false;
-                    break;
-                }
-                else { 
-                    // Crear un nuevo player jugable
-                    
-                }
-            }
+            isZombie = false;
+            SubmitPositionRequestRpc();
         }
+        else
+        {
+            // Si soy un cliente me suscribo a un delegado que me actualiza la posicion en mi cliente en caso de
+            Position.OnValueChanged += OnPositionChanged;
+            Rotation.OnValueChanged += OnRotationChanged;
+        }
+
+        // Todos los clientes escucharan los cambios de monedas del servidor
+        CoinsCollected.OnValueChanged += OnCoinsIncreased;
+
     }
+
+    // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
+    private void OnCoinsIncreased(int previousValue, int newValue)
+    {
+        CoinsCollected.Value = newValue;
+        UpdateCoinUI();
+    }
+
+    // Este metodo se dispara para cada cliente en el momento de que la networkVariable Position cambie
+    private void OnPositionChanged(Vector3 oldPos, Vector3 newPos)
+    {
+        transform.position = newPos;
+    }
+    // Este metodo se dispara para cada cliente en el momento de que la networkVariable Rotation cambie
+    private void OnRotationChanged(Quaternion oldRot, Quaternion newRot)
+    {
+        transform.rotation = newRot;
+    }
+    
+
+    // Metodo cutre preliminar que asigna el contolador del host a uno de los jugadores ya instanciados
+    //public override void OnNetworkSpawn()
+    //{
+
+    //    if (IsHost)
+    //    {
+    //        Debug.Log("Host conectado");
+
+    //    }
+    //    else if (IsClient) {
+
+    //    }
+
+    //}
 
     void Start()
     {
         //Si no eres owner vemos si tienes una camara activa y la quitamos
-        //if (!IsOwner)
-        //{
-        //    if (cameraTransform != null)
-        //    {
-        //        cameraTransform.gameObject.SetActive(false);
-        //    }
-        //    return;
-        //}
-        if (!IsClient && !IsServer)
+        if (IsOwner)
         {
             cameraTransform = Camera.main.transform;
+            // Instanciar una nueva cámara solo para este cliente
+            //GameObject cameraObj = Instantiate(cameraPrefab);
+            //cameraTransform = cameraObj.GetComponent<Camera>().transform;
         }
 
 
@@ -100,22 +126,22 @@ public class PlayerController : NetworkBehaviour
             return;
         }
         //Debug.Log("NO me esta dejando controlar a este jugador !!!!!!");
-        Debug.Log("puedo moverme");
+        //Debug.Log("puedo moverme");
         // Leer entrada del teclado
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
 
         // Mover el jugador
         MovePlayer();
-
+        
         // Manejar las animaciones del jugador
         HandleAnimations();
     }
     void MovePlayer()
     {
-        Debug.Log("1");
+        //Debug.Log("1");
         if (cameraTransform == null) { return; }
-        Debug.Log("2");
+        //Debug.Log("2");
         // Calcular la dirección de movimiento en relación a la cámara
         Vector3 moveDirection = (cameraTransform.forward * verticalInput + cameraTransform.right * horizontalInput).normalized;
         moveDirection.y = 0f; // Asegurarnos de que el movimiento es horizontal (sin componente Y)
@@ -124,19 +150,17 @@ public class PlayerController : NetworkBehaviour
         if (moveDirection != Vector3.zero)
         {
             Debug.Log("Puedo controlar a este jugador !!!!!!");
+
             // Calcular la rotación en Y basada en la dirección del movimiento
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            transform.rotation = Quaternion.RotateTowards(transform.rotation, targetRotation, 720f * Time.deltaTime);
+            SubmitRotationServerRpc(Quaternion.RotateTowards(transform.rotation, targetRotation, 720f * Time.deltaTime));
 
             // Ajustar la velocidad si es zombie
             float adjustedSpeed = isZombie ? moveSpeed * zombieSpeedModifier : moveSpeed;
 
             // Mover al jugador en la dirección deseada
             //transform.Translate(moveDirection * adjustedSpeed * Time.deltaTime, Space.World);
-            if (moveDirection.magnitude > 0.01f)
-            {
-                SubmitMovementServerRpc(moveDirection * adjustedSpeed * Time.deltaTime);
-            }
+            SubmitMovementServerRpc(moveDirection * adjustedSpeed * Time.deltaTime);
         }
     }
 
@@ -171,16 +195,17 @@ public class PlayerController : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void SubmitPositionRequestRpc(RpcParams rpcParams = default)
     {
-        var startPoint = new UnityEngine.Vector3(3f, 1f, 4f);
-        transform.position = new UnityEngine.Vector3(3f, 1f, 4f);
-        //Position.Value = new UnityEngine.Vector3(3f, 1f, 4f);
+        System.Random rand = new System.Random();
+        var startPoint = new UnityEngine.Vector3(UnityEngine.Random.Range(3f, 6f), UnityEngine.Random.Range(1f, 3f), UnityEngine.Random.Range(3f, 6f));
+        transform.position = startPoint;
+        Position.Value = startPoint;
     }
     // Metodo para que el servidor reciba que se ha cogido una moneda adicional
     [ServerRpc]
     public void coinCollectedServerRpc() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
     {
         CoinsCollected.Value++;
-        UpdateCoinOnlineClientRpc(CoinsCollected.Value);
+        //UpdateCoinOnlineClientRpc(CoinsCollected.Value);
         UpdateCoinUI();
     }
 
@@ -199,8 +224,15 @@ public class PlayerController : NetworkBehaviour
     private void SubmitMovementServerRpc(Vector3 moveVector)
     {
         transform.position += moveVector;
+        Position.Value = transform.position;
     }
 
+    [ServerRpc]
+    private void SubmitRotationServerRpc(Quaternion quaternion)
+    {
+        transform.rotation = quaternion;
+        Rotation.Value = quaternion;
+    }
 
 
     /// <summary>
