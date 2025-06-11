@@ -190,11 +190,6 @@ MonoBehaviour:
   zombieSpeedModifier: 0.8
   animator: {fileID: 370896438650836429}
   cameraTransform: {fileID: 0}
-  Rotation:
-    m_InternalValue: {x: 0, y: 0, z: 0, w: 0}
-  Position:
-    m_InternalValue: {x: 0, y: 0, z: 0}
-  cameraPrefab: {fileID: 6300408909118005695, guid: 4dc465e9063739043a42b1b97afbc33c, type: 3}
 --- !u!114 &4255965878129844906
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -224,5 +219,5 @@ MonoBehaviour:
   UseQuaternionCompression: 0
   UseHalfFloatPrecision: 0
   InLocalSpace: 0
-  Interpolate: 0
+  Interpolate: 1
   SlerpPosition: 0

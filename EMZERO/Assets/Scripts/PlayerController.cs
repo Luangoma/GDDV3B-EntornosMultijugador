@@ -26,9 +26,9 @@ public class PlayerController : NetworkBehaviour
     private float horizontalInput;         // Entrada horizontal (A/D o flechas)
     private float verticalInput;           // Entrada vertical (W/S o flechas)
 
-    public NetworkVariable<Quaternion> Rotation = new NetworkVariable<Quaternion>();
+    private NetworkVariable<Quaternion> Rotation = new NetworkVariable<Quaternion>();
 
-    public NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
+    private NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
 
     public override void OnNetworkSpawn()
     {
@@ -162,6 +162,12 @@ public class PlayerController : NetworkBehaviour
             //transform.Translate(moveDirection * adjustedSpeed * Time.deltaTime, Space.World);
             SubmitMovementServerRpc(moveDirection * adjustedSpeed * Time.deltaTime);
         }
+    }
+    private void OnDestroy()
+    {
+        Rotation.OnValueChanged -= OnRotationChanged;        
+        Position.OnValueChanged -= OnPositionChanged;
+        
     }
 
     void HandleAnimations()

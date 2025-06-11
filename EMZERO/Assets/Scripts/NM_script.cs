@@ -30,4 +30,14 @@ public class NM_script : MonoBehaviour
         if (GUILayout.Button("Client")) m_NetworkManager.StartClient();
         if (GUILayout.Button("Server")) m_NetworkManager.StartServer();
     }
+
+    //void StartHost() {
+    //    NetworkManager.Singleton.StartHost();
+    //}
+    //void StartServer() {
+    //    NetworkManager.Singleton.StartServer();
+    //}
+    //void StartClient() { 
+    //    NetworkManager.Singleton.StartClient();
+    //}
 }
