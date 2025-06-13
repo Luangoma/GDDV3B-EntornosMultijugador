@@ -991,6 +991,7 @@ GameObject:
   - component: {fileID: 321264097}
   - component: {fileID: 321264099}
   - component: {fileID: 321264098}
+  - component: {fileID: 321264100}
   m_Layer: 5
   m_Name: valor tiempo min
   m_TagString: Untagged
@@ -1114,6 +1115,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 321264096}
   m_CullTransparentMesh: 1
+--- !u!114 &321264100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 321264096}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 720f298c4fe40ac4faaa8c0b4de17545, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slider: {fileID: 781814495}
+  textField: {fileID: 321264098}
 --- !u!1 &355956389
 GameObject:
   m_ObjectHideFlags: 0
@@ -2614,7 +2629,6 @@ GameObject:
   m_Component:
   - component: {fileID: 753917257}
   - component: {fileID: 753917258}
-  - component: {fileID: 753917259}
   m_Layer: 0
   m_Name: MJDensidadMonedas
   m_TagString: Untagged
@@ -2696,7 +2710,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 753917259}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: SliderValueText, Assembly-CSharp
         m_MethodName: HandleSliderValueOnChangeBy5
         m_Mode: 0
@@ -2708,20 +2722,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &753917259
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 753917256}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 720f298c4fe40ac4faaa8c0b4de17545, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  slider: {fileID: 753917258}
-  textField: {fileID: 1218223405}
 --- !u!1 &781814493
 GameObject:
   m_ObjectHideFlags: 0
@@ -2732,7 +2732,6 @@ GameObject:
   m_Component:
   - component: {fileID: 781814494}
   - component: {fileID: 781814495}
-  - component: {fileID: 781814496}
   m_Layer: 0
   m_Name: MJTiempoJuego
   m_TagString: Untagged
@@ -2814,7 +2813,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 781814496}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: SliderValueText, Assembly-CSharp
         m_MethodName: HandleSliderValueOnChange
         m_Mode: 0
@@ -2826,20 +2825,6 @@ MonoBehaviour:
           m_StringArgument: 
           m_BoolArgument: 0
         m_CallState: 2
---- !u!114 &781814496
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 781814493}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 720f298c4fe40ac4faaa8c0b4de17545, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  slider: {fileID: 781814495}
-  textField: {fileID: 321264098}
 --- !u!1 &806292319
 GameObject:
   m_ObjectHideFlags: 0
@@ -3711,7 +3696,7 @@ RectTransform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 917546152}
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
@@ -3721,7 +3706,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
-  m_AnchoredPosition: {x: 0, y: -103.7}
+  m_AnchoredPosition: {x: 0.000030517578, y: -103.69999}
   m_SizeDelta: {x: 160, y: 30}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!114 &917546154
@@ -5080,8 +5065,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 720f298c4fe40ac4faaa8c0b4de17545, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  slider: {fileID: 0}
-  textField: {fileID: 0}
+  slider: {fileID: 753917258}
+  textField: {fileID: 1218223405}
 --- !u!114 &1218223405
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7881,7 +7866,6 @@ GameObject:
   m_Component:
   - component: {fileID: 1855227529}
   - component: {fileID: 1855227531}
-  - component: {fileID: 1855227530}
   m_Layer: 0
   m_Name: MJTiempoJuego
   m_TagString: Untagged
@@ -7912,20 +7896,6 @@ RectTransform:
   m_AnchoredPosition: {x: -225.3064, y: 68.98523}
   m_SizeDelta: {x: 160, y: 20}
   m_Pivot: {x: 0.5, y: 0.5}
---- !u!114 &1855227530
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1855227528}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 720f298c4fe40ac4faaa8c0b4de17545, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  slider: {fileID: 1855227531}
-  textField: {fileID: 1866747867}
 --- !u!114 &1855227531
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -7977,7 +7947,7 @@ MonoBehaviour:
   m_OnValueChanged:
     m_PersistentCalls:
       m_Calls:
-      - m_Target: {fileID: 1855227530}
+      - m_Target: {fileID: 0}
         m_TargetAssemblyTypeName: SliderValueText, Assembly-CSharp
         m_MethodName: HandleSliderValueOnChange
         m_Mode: 0
@@ -8000,6 +7970,7 @@ GameObject:
   - component: {fileID: 1866747866}
   - component: {fileID: 1866747868}
   - component: {fileID: 1866747867}
+  - component: {fileID: 1866747869}
   m_Layer: 5
   m_Name: valor tiempo min
   m_TagString: Untagged
@@ -8123,6 +8094,20 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1866747865}
   m_CullTransparentMesh: 1
+--- !u!114 &1866747869
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1866747865}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 720f298c4fe40ac4faaa8c0b4de17545, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  slider: {fileID: 1855227531}
+  textField: {fileID: 1866747867}
 --- !u!1 &1875946787
 GameObject:
   m_ObjectHideFlags: 0
@@ -8643,8 +8628,8 @@ RectTransform:
   - {fileID: 781814494}
   - {fileID: 1685225082}
   - {fileID: 753917257}
-  - {fileID: 519479498}
   - {fileID: 917546153}
+  - {fileID: 519479498}
   m_Father: {fileID: 1661791416}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
