@@ -8,10 +8,11 @@ using UnityEngine.UIElements;
 public class PlayerController : NetworkBehaviour
 {
     private TextMeshProUGUI coinText;
-
+    System.Random rand = new System.Random();
+    [SerializeField] private GameObject playerCameraPrefab;
     [Header("Stats")]
     // Ahora es variable compartida -- En un foro vi cosas de permisos como NetworkVariableReading.everyone o algo asi
-    public NetworkVariable<int> CoinsCollected = new NetworkVariable<int> (0);
+    public NetworkVariable<int> CoinsCollected = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Header("Character settings")]
     public bool isZombie = false; // Añadir una propiedad para el estado del jugador
@@ -34,19 +35,39 @@ public class PlayerController : NetworkBehaviour
     {
         if (IsOwner)
         {
+            // Asigna la cámara principal a este jugador local
+            //Camera mainCamera = Camera.main;
+            //if (mainCamera != null)
+            //{
+            //    CameraController cameraController = mainCamera.GetComponent<CameraController>();
+            //    if (cameraController != null)
+            //    {
+            //        cameraController.player = this.transform;
+            //    }
+            //}
+            // Instancia una cámara solo para este jugador
+            GameObject camObj = Instantiate(playerCameraPrefab);
+            Camera cam = camObj.GetComponent<Camera>();
+            cam.tag = "MainCamera"; // Opcional, si quieres usar Camera.main
+            cameraTransform = cam.transform;
+
+            // Asigna el jugador al CameraController de esa cámara
+            CameraController cameraController = camObj.GetComponent<CameraController>();
+            if (cameraController != null)
+            {
+                Debug.Log("Cámara asignada al jugador local");
+                cameraController.player = this.transform;
+            }
             isZombie = false;
             SubmitPositionRequestRpc();
         }
         else
         {
-            // Si soy un cliente me suscribo a un delegado que me actualiza la posicion en mi cliente en caso de
             Position.OnValueChanged += OnPositionChanged;
             Rotation.OnValueChanged += OnRotationChanged;
         }
 
-        // Todos los clientes escucharan los cambios de monedas del servidor
         CoinsCollected.OnValueChanged += OnCoinsIncreased;
-
     }
 
     // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
@@ -86,20 +107,27 @@ public class PlayerController : NetworkBehaviour
     void Start()
     {
         //Si no eres owner vemos si tienes una camara activa y la quitamos
-        if (IsOwner)
-        {
-            cameraTransform = Camera.main.transform;
-            // Instanciar una nueva cámara solo para este cliente
-            //GameObject cameraObj = Instantiate(cameraPrefab);
-            //cameraTransform = cameraObj.GetComponent<Camera>().transform;
-        }
 
-
+        // -----------------------------------------------------------------------------------------
+        // Todo esto solo funciona en la escena de la partida, porque el canvas no existe en el menu
+        // -----------------------------------------------------------------------------------------
         // Buscar el objeto "CanvasPlayer" en la escena
         GameObject canvas = GameObject.Find("CanvasPlayer");
 
         if (canvas != null)
         {
+            if (IsOwner)
+            {
+                cameraTransform = Camera.main.transform;
+                // Instanciar una nueva cámara solo para este cliente
+                //GameObject cameraObj = Instantiate(cameraPrefab);
+                //cameraTransform = cameraObj.GetComponent<Camera>().transform;
+            }
+            else
+            {
+                // Si no eres owner, no tienes camara
+                cameraTransform = null;
+            }
             Debug.Log("Canvas encontrado");
 
             // Buscar el Panel dentro del CanvasHud
@@ -113,9 +141,9 @@ public class PlayerController : NetworkBehaviour
                     coinText = coinTextTransform.GetComponent<TextMeshProUGUI>();
                 }
             }
+            UpdateCoinUI();
         }
 
-        UpdateCoinUI();
     }
 
     void Update()
@@ -152,8 +180,8 @@ public class PlayerController : NetworkBehaviour
             Debug.Log("Puedo controlar a este jugador !!!!!!");
 
             // Calcular la rotación en Y basada en la dirección del movimiento
-            Quaternion targetRotation = Quaternion.LookRotation(moveDirection);
-            SubmitRotationServerRpc(Quaternion.RotateTowards(transform.rotation, targetRotation, 720f * Time.deltaTime));
+            Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
+            SubmitRotationServerRpc(targetRotation);
 
             // Ajustar la velocidad si es zombie
             float adjustedSpeed = isZombie ? moveSpeed * zombieSpeedModifier : moveSpeed;
@@ -169,6 +197,7 @@ public class PlayerController : NetworkBehaviour
         Position.OnValueChanged -= OnPositionChanged;
         
     }
+    
 
     void HandleAnimations()
     {
@@ -201,7 +230,6 @@ public class PlayerController : NetworkBehaviour
     [Rpc(SendTo.Server)]
     private void SubmitPositionRequestRpc(RpcParams rpcParams = default)
     {
-        System.Random rand = new System.Random();
         var startPoint = new UnityEngine.Vector3(UnityEngine.Random.Range(3f, 6f), UnityEngine.Random.Range(1f, 3f), UnityEngine.Random.Range(3f, 6f));
         transform.position = startPoint;
         Position.Value = startPoint;

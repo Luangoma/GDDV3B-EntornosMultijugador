@@ -86,7 +86,7 @@ public class LevelManager : MonoBehaviour
     {
         if (NetworkManager.Singleton.IsServer)
         {
-            //NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
+            NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
         }
         Debug.Log("Iniciando el nivel");
         // Buscar el objeto "CanvasPlayer" en la escena
@@ -132,9 +132,16 @@ public class LevelManager : MonoBehaviour
             CoinsGenerated = levelBuilder.GetCoinsGenerated();
         }
 
-        SpawnTeams();
+        //SpawnTeams();
         
         UpdateTeamUI();
+    }
+    private void OnDestroy()
+    {
+        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
+        {
+            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedCallback;
+        }
     }
 
     private void Update()
@@ -188,6 +195,27 @@ public class LevelManager : MonoBehaviour
 
     #region Team management methods
 
+
+    private void OnClientConnectedCallback(ulong clientId)
+    {
+        // Busca un punto de spawn libre para este jugador
+        int playerIndex = (int)clientId % humanSpawnPoints.Count;
+        Vector3 spawnPos = humanSpawnPoints[playerIndex];
+
+        // Instancia el jugador SOLO en el servidor
+        GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
+
+        // Haz spawn en red y asigna el ownership al cliente que se conecta
+        NetworkObject netObj = player.GetComponent<NetworkObject>();
+        netObj.SpawnAsPlayerObject(clientId);
+
+        // Asigna un ID único si lo necesitas
+        var playerController = player.GetComponent<PlayerController>();
+        if (playerController != null && uniqueIdGenerator != null)
+        {
+            playerController.uniqueID = uniqueIdGenerator.GenerateUniqueID();
+        }
+    }
     private void ChangeToZombie()
     {
         GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
@@ -417,14 +445,6 @@ public class LevelManager : MonoBehaviour
             }
             Debug.Log($"Personaje no jugable instanciado en {spawnPosition}");
         }
-    }
-    public void OnClientConnectedCallback(ulong clientId)
-    {
-        //Vector3 spawnPos = GetNextSpawnPoint(); // o lo que uses
-        //GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-
-        //NetworkObject netObj = player.GetComponent<NetworkObject>();
-        //netObj.SpawnAsPlayerObject(clientId); // Este jugador será controlado por clientId
     }
     private void UpdateTeamUI()
     {
