@@ -9,7 +9,7 @@ EditorBuildSettings:
     path: Assets/PrefabsTest/TestNetcode.unity
     guid: cca222f73c4d93649afe3b2eb174411d
   - enabled: 1
-    path: Assets/Scenes/MenuScene.unity
+    path: Assets/Scenes/MenuScene_interfaces.unity
     guid: 500e43dd6f1e5e34091eb0b94826aced
   - enabled: 1
     path: Assets/Scenes/GameScene.unity
