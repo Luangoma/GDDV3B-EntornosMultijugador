@@ -44,7 +44,12 @@ public class MenuManager : MonoBehaviour
         actual = EasyP(PantallaEnum.Pantallaclientehostseleccion);
         actual.gameObject.SetActive(true);
     }
-
+    public void StartGameFromMenuScene()
+    {
+        SceneManager.LoadScene("GameScene"); // Cambia "MainScene" por el nombre de tu escena principal
+        //actual = EasyP(PantallaEnum.Pantallaclientehostseleccion);
+        //actual.gameObject.SetActive(true);
+    }
     public void CambiarEscenaAdelante()
     {
         historial.Push(actual);
