@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using TMPro;
 using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -49,6 +50,7 @@ public class LevelManager : MonoBehaviour
 
     private UniqueIdGenerator uniqueIdGenerator;
     private LevelBuilder levelBuilder;
+    private GameManager gm;
 
     private PlayerController playerController;
 
@@ -79,15 +81,14 @@ public class LevelManager : MonoBehaviour
         // Obtener la referencia al LevelBuilder
         levelBuilder = GetComponent<LevelBuilder>();
 
+        // Obtener la referencia al GameManager
+        gm = FindObjectOfType<GameManager>();
+
         Time.timeScale = 1f; // Asegurarse de que el tiempo no esté detenido
     }
 
     private void Start()
     {
-        if (NetworkManager.Singleton.IsServer)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
-        }
         Debug.Log("Iniciando el nivel");
         // Buscar el objeto "CanvasPlayer" en la escena
         GameObject canvas = GameObject.Find("CanvasPlayer");
@@ -135,13 +136,6 @@ public class LevelManager : MonoBehaviour
         //SpawnTeams();
         
         UpdateTeamUI();
-    }
-    private void OnDestroy()
-    {
-        if (NetworkManager.Singleton != null && NetworkManager.Singleton.IsServer)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= OnClientConnectedCallback;
-        }
     }
 
     private void Update()
@@ -196,26 +190,7 @@ public class LevelManager : MonoBehaviour
     #region Team management methods
 
 
-    private void OnClientConnectedCallback(ulong clientId)
-    {
-        // Busca un punto de spawn libre para este jugador
-        int playerIndex = (int)clientId % humanSpawnPoints.Count;
-        Vector3 spawnPos = humanSpawnPoints[playerIndex];
-
-        // Instancia el jugador SOLO en el servidor
-        GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
-
-        // Haz spawn en red y asigna el ownership al cliente que se conecta
-        NetworkObject netObj = player.GetComponent<NetworkObject>();
-        netObj.SpawnAsPlayerObject(clientId);
-
-        // Asigna un ID único si lo necesitas
-        var playerController = player.GetComponent<PlayerController>();
-        if (playerController != null && uniqueIdGenerator != null)
-        {
-            playerController.uniqueID = uniqueIdGenerator.GenerateUniqueID();
-        }
-    }
+    
     private void ChangeToZombie()
     {
         GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
@@ -225,7 +200,7 @@ public class LevelManager : MonoBehaviour
     public void ChangeToZombie(GameObject human, bool enabled)
     {
         Debug.Log("Cambiando a Zombie");
-
+        return;
         if (human != null)
         {
             // Guardar la posición, rotación y uniqueID del humano actual
@@ -234,7 +209,7 @@ public class LevelManager : MonoBehaviour
             string uniqueID = human.GetComponent<PlayerController>().uniqueID;
 
             // Destruir el humano actual
-            Destroy(human);
+            RequestDestroyServerRpc(human);
 
             // Instanciar el prefab del zombie en la misma posición y rotación
             GameObject zombie = Instantiate(zombiePrefab, playerPosition, playerRotation);
@@ -290,6 +265,7 @@ public class LevelManager : MonoBehaviour
     private void ChangeToHuman()
     {
         Debug.Log("Cambiando a Humano");
+        return;
 
         // Obtener la referencia al jugador actual
         GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
@@ -301,7 +277,7 @@ public class LevelManager : MonoBehaviour
             Quaternion playerRotation = currentPlayer.transform.rotation;
 
             // Destruir el jugador actual
-            Destroy(currentPlayer);
+            RequestDestroyServerRpc(currentPlayer);
 
             // Instanciar el prefab del humano en la misma posición y rotación
             GameObject human = Instantiate(playerPrefab, playerPosition, playerRotation);
@@ -345,6 +321,15 @@ public class LevelManager : MonoBehaviour
         else
         {
             Debug.LogError("No se encontró el jugador actual.");
+        }
+    }
+
+    [ServerRpc]
+    private void RequestDestroyServerRpc(GameObject currentPlayer)
+    {
+        if (NetworkManager.Singleton.IsServer)
+        {
+            GetComponent<NetworkObject>().Despawn();
         }
     }
 

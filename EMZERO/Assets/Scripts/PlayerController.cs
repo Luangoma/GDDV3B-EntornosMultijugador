@@ -46,6 +46,11 @@ public class PlayerController : NetworkBehaviour
             //    }
             //}
             // Instancia una cámara solo para este jugador
+            if (playerCameraPrefab == null)
+            {
+                Debug.LogWarning("playerCameraPrefab no asignado en PlayerController.");
+                return;
+            }
             GameObject camObj = Instantiate(playerCameraPrefab);
             Camera cam = camObj.GetComponent<Camera>();
             cam.tag = "MainCamera"; // Opcional, si quieres usar Camera.main
@@ -177,7 +182,7 @@ public class PlayerController : NetworkBehaviour
         // Mover el jugador usando el Transform
         if (moveDirection != Vector3.zero)
         {
-            Debug.Log("Puedo controlar a este jugador !!!!!!");
+            //Debug.Log("Puedo controlar a este jugador !!!!!!");
 
             // Calcular la rotación en Y basada en la dirección del movimiento
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
