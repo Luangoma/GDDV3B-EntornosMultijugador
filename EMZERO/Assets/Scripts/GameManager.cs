@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class GameManager : NetworkBehaviour
 {
@@ -119,12 +120,29 @@ public class GameManager : NetworkBehaviour
     }
     private bool AllReady()
     {
-        foreach (var ready in readyStates.Values)
+        // Solo cuenta los clientId realmente conectados
+        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
         {
-            if (!ready) return false;
+            if (!readyStates.ContainsKey(clientId) || !readyStates[clientId])
+                return false;
         }
-        return readyStates.Count > 0;
+        // Debe haber al menos 2 jugadores (host + al menos un cliente)
+        return NetworkManager.Singleton.ConnectedClientsIds.Count > 1;
     }
+
+    private void OnNetworkSceneLoaded(string sceneName, LoadSceneMode mode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
+    {
+        if (sceneName == "GameScene" && NetworkManager.Singleton.IsServer)
+        {
+            // Aquí el servidor puede spawnear a todos los jugadores
+            foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+                SpawnClient(clientId);
+            //Debug.LogError("GameManager no encontrado en la nueva escena.");
+        }
+        NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnNetworkSceneLoaded;
+    }
+
+
     // Llamado por el cliente al pulsar "Listo"
     [ServerRpc(RequireOwnership = false)]
     public void SetReadyServerRpc(ulong localClientId, ServerRpcParams rpcParams = default)
@@ -141,7 +159,8 @@ public class GameManager : NetworkBehaviour
                 Debug.Log($"Client {kvp.Key} ready: {kvp.Value}");
 
             Debug.Log("All clients are ready. Starting game...");
-            StartGame();
+            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnNetworkSceneLoaded;
+            NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
         }
     }
     // Update is called once per frame

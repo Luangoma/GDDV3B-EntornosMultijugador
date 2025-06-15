@@ -33,7 +33,9 @@ public class MenuManager : MonoBehaviour
         Time.timeScale = 1f; // Asegúrate de que el tiempo está restaurado al cargar la escena
         actual = pantallas[(int)PantallaEnum.PantallaMenuInicio];
         gm = FindObjectOfType<GameManager>();
+        
     }
+
 
     public GameObject EasyP(PantallaEnum pantalla)
     {
@@ -49,25 +51,10 @@ public class MenuManager : MonoBehaviour
     }
     public void StartGameFromMenuScene()
     {
-        SceneManager.sceneLoaded += OnSceneLoaded;
+        
         SceneManager.LoadScene("GameScene"); // Cambia "MainScene" por el nombre de tu escena principal
         //actual = EasyP(PantallaEnum.Pantallaclientehostseleccion);
         //actual.gameObject.SetActive(true);
-    }
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (scene.name == "GameScene")
-        {
-            GameManager gm = FindObjectOfType<GameManager>();
-            if (gm != null)
-            {
-                gm.SpawnClient(NetworkManager.Singleton.LocalClientId); // O gm.StartGame();
-            }
-            else
-            {
-                Debug.LogError("GameManager no encontrado en la nueva escena.");
-            }
-        }
     }
     public void CambiarEscenaAdelante()
     {
