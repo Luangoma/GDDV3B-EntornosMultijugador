@@ -30,12 +30,12 @@ namespace HelloWorld
 
         static Vector3 GetRandomPositionOnPlane()
         {
-            return new Vector3(Random.Range(-3f, 3f), 1f, Random.Range(-3f, 3f));
+            return new Vector3(Random.Range(-1f, 1f), 1f, Random.Range(-1f, 1f));
         }
 
-        private void Update()
-        {
-            transform.position = Position.Value;
-        }
+        //private void Update()
+        //{
+        //    transform.position = Position.Value;
+        //}
     }
 }

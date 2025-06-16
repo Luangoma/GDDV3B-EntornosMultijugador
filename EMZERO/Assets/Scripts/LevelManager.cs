@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -48,6 +50,7 @@ public class LevelManager : MonoBehaviour
 
     private UniqueIdGenerator uniqueIdGenerator;
     private LevelBuilder levelBuilder;
+    private GameManager gm;
 
     private PlayerController playerController;
 
@@ -55,6 +58,14 @@ public class LevelManager : MonoBehaviour
     private bool isGameOver = false;
 
     public GameObject gameOverPanel; // Asigna el panel desde el inspector
+
+    // Un tipo de variable especial, del cual no se puede leer hasta que el servidor lo actualice
+    public NetworkVariable<int> playerNumber = new NetworkVariable<int>(
+        0,
+        NetworkVariableReadPermission.Everyone,
+        NetworkVariableWritePermission.Server
+    );
+    private Action<ulong> HandleClientConnected;
 
     #endregion
 
@@ -69,6 +80,9 @@ public class LevelManager : MonoBehaviour
 
         // Obtener la referencia al LevelBuilder
         levelBuilder = GetComponent<LevelBuilder>();
+
+        // Obtener la referencia al GameManager
+        gm = FindObjectOfType<GameManager>();
 
         Time.timeScale = 1f; // Asegurarse de que el tiempo no esté detenido
     }
@@ -119,7 +133,7 @@ public class LevelManager : MonoBehaviour
             CoinsGenerated = levelBuilder.GetCoinsGenerated();
         }
 
-        SpawnTeams();
+        //SpawnTeams();
         
         UpdateTeamUI();
     }
@@ -175,6 +189,8 @@ public class LevelManager : MonoBehaviour
 
     #region Team management methods
 
+
+    
     private void ChangeToZombie()
     {
         GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
@@ -184,7 +200,7 @@ public class LevelManager : MonoBehaviour
     public void ChangeToZombie(GameObject human, bool enabled)
     {
         Debug.Log("Cambiando a Zombie");
-
+        return;
         if (human != null)
         {
             // Guardar la posición, rotación y uniqueID del humano actual
@@ -193,7 +209,7 @@ public class LevelManager : MonoBehaviour
             string uniqueID = human.GetComponent<PlayerController>().uniqueID;
 
             // Destruir el humano actual
-            Destroy(human);
+            RequestDestroyServerRpc(human);
 
             // Instanciar el prefab del zombie en la misma posición y rotación
             GameObject zombie = Instantiate(zombiePrefab, playerPosition, playerRotation);
@@ -249,6 +265,7 @@ public class LevelManager : MonoBehaviour
     private void ChangeToHuman()
     {
         Debug.Log("Cambiando a Humano");
+        return;
 
         // Obtener la referencia al jugador actual
         GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
@@ -260,7 +277,7 @@ public class LevelManager : MonoBehaviour
             Quaternion playerRotation = currentPlayer.transform.rotation;
 
             // Destruir el jugador actual
-            Destroy(currentPlayer);
+            RequestDestroyServerRpc(currentPlayer);
 
             // Instanciar el prefab del humano en la misma posición y rotación
             GameObject human = Instantiate(playerPrefab, playerPosition, playerRotation);
@@ -304,6 +321,15 @@ public class LevelManager : MonoBehaviour
         else
         {
             Debug.LogError("No se encontró el jugador actual.");
+        }
+    }
+
+    [ServerRpc]
+    private void RequestDestroyServerRpc(GameObject currentPlayer)
+    {
+        if (NetworkManager.Singleton.IsServer)
+        {
+            GetComponent<NetworkObject>().Despawn();
         }
     }
 
@@ -363,15 +389,21 @@ public class LevelManager : MonoBehaviour
     private void SpawnTeams()
     {
         Debug.Log("Instanciando equipos");
+
+        // Volver si no quedan puentos de spawn
         if (humanSpawnPoints.Count <= 0) { return; }
+
+        // Cada cliente hace spawn de un protagonista que solo el podrá controlar
+
         SpawnPlayer(humanSpawnPoints[0], playerPrefab);
         Debug.Log($"Personaje jugable instanciado en {humanSpawnPoints[0]}");
+
 
         for (int i = 1; i < numberOfHumans; i++)
         {
             if (i < humanSpawnPoints.Count)
             {
-                SpawnNonPlayableCharacter(playerPrefab, humanSpawnPoints[i]);
+                //SpawnNonPlayableCharacter(playerPrefab, humanSpawnPoints[i]);
             }
         }
 
@@ -379,7 +411,7 @@ public class LevelManager : MonoBehaviour
         {
             if (i < zombieSpawnPoints.Count)
             {
-                SpawnNonPlayableCharacter(zombiePrefab, zombieSpawnPoints[i]);
+                //SpawnNonPlayableCharacter(zombiePrefab, zombieSpawnPoints[i]);
             }
         }
     }
@@ -399,7 +431,6 @@ public class LevelManager : MonoBehaviour
             Debug.Log($"Personaje no jugable instanciado en {spawnPosition}");
         }
     }
-
     private void UpdateTeamUI()
     {
         if (humansText != null)
