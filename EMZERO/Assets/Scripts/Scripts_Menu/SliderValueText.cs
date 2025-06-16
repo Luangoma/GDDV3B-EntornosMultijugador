@@ -16,10 +16,12 @@ public class SliderValueText : MonoBehaviour
     public void HandleSliderValueOnChangeBy5(float value)
     {
         var tmp = value * 5;
+        GameManager.Instance.densidad = tmp;
         textField.SetText($"{tmp.ToString()} % monedas");
     }
     public void HandleSliderValueOnChange(float value)
     {
+        GameManager.Instance.tiempo = value;
         textField.SetText($"{value.ToString()} minutos");
     }
 }

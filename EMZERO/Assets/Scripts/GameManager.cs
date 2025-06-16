@@ -23,7 +23,57 @@ public class GameManager : NetworkBehaviour
     };
 
     private int nextSpawnIndex = 0;
+    public static GameManager Instance { get; private set; }
+    public GameMode modo;
+    public string codigo;
+    public float tiempo;
+    public float densidad;
+    private NetworkManager nm;
 
+    public void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(this);
+        }
+        else
+        {
+            Destroy(this); // Esto evita múltiples instancias
+        }
+    }
+
+    // Start is called before the first frame update
+    void Start()
+    {
+        nm = NetworkManager.Singleton;
+        if (IsServer)
+        {
+            nm.OnClientConnectedCallback += HandleClientConnected;
+            nm.OnClientDisconnectCallback += HandleClientDisconnected;
+        }
+        // Añadir el host a readyStates
+        ulong hostId = nm.LocalClientId;
+        if (!readyStates.ContainsKey(hostId))
+        {
+            readyStates[hostId] = false;
+            Debug.Log($"Host (clientId {hostId}) añadido a readyStates.");
+        }
+    }
+    public override void OnDestroy()
+    {
+        if (IsServer && nm != null)
+        {
+            nm.OnClientConnectedCallback -= HandleClientConnected;
+            nm.OnClientDisconnectCallback -= HandleClientDisconnected;
+        }
+
+    }
+    // Update is called once per frame
+    void Update()
+    {
+
+    }
     public override void OnNetworkSpawn()
     {
         if (playerPrefab == null)
@@ -64,40 +114,11 @@ public class GameManager : NetworkBehaviour
     public void StartGame()
     {
         Debug.Log("Starting game with all players ready.");
-        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        foreach (var clientId in nm.ConnectedClientsIds)
         {
             SpawnClient(clientId);
         }
 
-    }
-    public void Awake()
-    {
-        DontDestroyOnLoad(gameObject);
-    }
-    // Start is called before the first frame update
-    void Start()
-    {
-        if (IsServer)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback += HandleClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback += HandleClientDisconnected;
-        }
-        // Añadir el host a readyStates
-        ulong hostId = NetworkManager.Singleton.LocalClientId;
-        if (!readyStates.ContainsKey(hostId))
-        {
-            readyStates[hostId] = false;
-            Debug.Log($"Host (clientId {hostId}) añadido a readyStates.");
-        }
-    }
-    public override void OnDestroy()
-    {
-        if (IsServer && NetworkManager.Singleton != null)
-        {
-            NetworkManager.Singleton.OnClientConnectedCallback -= HandleClientConnected;
-            NetworkManager.Singleton.OnClientDisconnectCallback -= HandleClientDisconnected;
-        }
-        
     }
     private void HandleClientDisconnected(ulong clientId)
     {
@@ -121,25 +142,25 @@ public class GameManager : NetworkBehaviour
     private bool AllReady()
     {
         // Solo cuenta los clientId realmente conectados
-        foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+        foreach (var clientId in nm.ConnectedClientsIds)
         {
             if (!readyStates.ContainsKey(clientId) || !readyStates[clientId])
                 return false;
         }
         // Debe haber al menos 2 jugadores (host + al menos un cliente)
-        return NetworkManager.Singleton.ConnectedClientsIds.Count > 1;
+        return nm.ConnectedClientsIds.Count > 1;
     }
 
     private void OnNetworkSceneLoaded(string sceneName, LoadSceneMode mode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
-        if (sceneName == "GameScene" && NetworkManager.Singleton.IsServer)
+        if (sceneName == "GameScene" && nm.IsServer)
         {
             // Aquí el servidor puede spawnear a todos los jugadores
-            foreach (var clientId in NetworkManager.Singleton.ConnectedClientsIds)
+            foreach (var clientId in nm.ConnectedClientsIds)
                 SpawnClient(clientId);
             //Debug.LogError("GameManager no encontrado en la nueva escena.");
         }
-        NetworkManager.Singleton.SceneManager.OnLoadEventCompleted -= OnNetworkSceneLoaded;
+        nm.SceneManager.OnLoadEventCompleted -= OnNetworkSceneLoaded;
     }
 
 
@@ -159,13 +180,8 @@ public class GameManager : NetworkBehaviour
                 Debug.Log($"Client {kvp.Key} ready: {kvp.Value}");
 
             Debug.Log("All clients are ready. Starting game...");
-            NetworkManager.Singleton.SceneManager.OnLoadEventCompleted += OnNetworkSceneLoaded;
-            NetworkManager.Singleton.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
+            nm.SceneManager.OnLoadEventCompleted += OnNetworkSceneLoaded;
+            nm.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
         }
-    }
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 }
