@@ -35,8 +35,7 @@ public class LevelManager : MonoBehaviour
     [Tooltip("Tiempo de partida en minutos para el modo tiempo")]
     [SerializeField] private int minutes = 5;
 
-    private List<Vector3> humanSpawnPoints = new List<Vector3>();
-    private List<Vector3> zombieSpawnPoints = new List<Vector3>();
+    private List<Vector3> SpawnPoints = new List<Vector3>();
 
     // Referencias a los elementos de texto en el canvas
     private TextMeshProUGUI humansText;
@@ -85,6 +84,12 @@ public class LevelManager : MonoBehaviour
         gm = FindObjectOfType<GameManager>();
 
         Time.timeScale = 1f; // Asegurarse de que el tiempo no esté detenido
+        if (levelBuilder != null)
+        {
+            levelBuilder.Build();
+            SpawnPoints = levelBuilder.GetSpawnPoints();
+            CoinsGenerated = levelBuilder.GetCoinsGenerated();
+        }
     }
 
     private void Start()
@@ -125,16 +130,10 @@ public class LevelManager : MonoBehaviour
         remainingSeconds = minutes * 60;
 
         // Obtener los puntos de aparición y el número de monedas generadas desde LevelBuilder
-        if (levelBuilder != null)
-        {
-            levelBuilder.Build();
-            humanSpawnPoints = levelBuilder.GetHumanSpawnPoints();
-            zombieSpawnPoints = levelBuilder.GetZombieSpawnPoints();
-            CoinsGenerated = levelBuilder.GetCoinsGenerated();
-        }
+
 
         //SpawnTeams();
-        
+
         UpdateTeamUI();
     }
 
@@ -190,7 +189,7 @@ public class LevelManager : MonoBehaviour
     #region Team management methods
 
 
-    
+
     private void ChangeToZombie()
     {
         GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
@@ -331,14 +330,9 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    public List<Vector3> GetHumanSpawnPoints()
+    public List<Vector3> GetSpawnPoints()
     {
-        return humanSpawnPoints;
-    }
-
-    public List<Vector3> GetZombieSpawnPoints()
-    {
-        return zombieSpawnPoints;
+        return SpawnPoints;
     }
 
     [ServerRpc]
@@ -350,104 +344,6 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    private void SpawnPlayer(Vector3 spawnPosition, GameObject prefab)
-    {
-        Debug.Log($"Instanciando jugador en {spawnPosition}");
-        if (prefab != null)
-        {
-            Debug.Log($"Instanciando jugador en {spawnPosition}");
-            // Crear una instancia del prefab en el punto especificado
-            GameObject player = Instantiate(prefab, spawnPosition, Quaternion.identity);
-            player.tag = "Player";
-
-            // Obtener la referencia a la cámara principal
-            Camera mainCamera = Camera.main;
-
-            if (mainCamera != null)
-            {
-                // Obtener el script CameraController de la cámara principal
-                CameraController cameraController = mainCamera.GetComponent<CameraController>();
-
-                if (cameraController != null)
-                {
-                    Debug.Log($"CameraController encontrado en la cámara principal.");
-                    // Asignar el jugador al script CameraController
-                    cameraController.player = player.transform;
-                }
-
-                Debug.Log($"Cámara principal encontrada en {mainCamera}");
-                // Obtener el componente PlayerController del jugador instanciado
-                playerController = player.GetComponent<PlayerController>();
-                // Asignar el transform de la cámara al PlayerController
-                if (playerController != null)
-                {
-                    Debug.Log($"PlayerController encontrado en el jugador instanciado.");
-                    playerController.enabled = true;
-                    playerController.cameraTransform = mainCamera.transform;
-                    playerController.uniqueID = uniqueIdGenerator.GenerateUniqueID(); // Generar un identificador único
-
-                }
-                else
-                {
-                    Debug.LogError("PlayerController no encontrado en el jugador instanciado.");
-                }
-            }
-            else
-            {
-                Debug.LogError("No se encontró la cámara principal.");
-            }
-        }
-        else
-        {
-            Debug.LogError("Faltan referencias al prefab o al punto de aparición.");
-        }
-    }
-
-    private void SpawnTeams()
-    {
-        Debug.Log("Instanciando equipos");
-
-        // Volver si no quedan puentos de spawn
-        if (humanSpawnPoints.Count <= 0) { return; }
-
-        // Cada cliente hace spawn de un protagonista que solo el podrá controlar
-
-        SpawnPlayer(humanSpawnPoints[0], playerPrefab);
-        Debug.Log($"Personaje jugable instanciado en {humanSpawnPoints[0]}");
-
-
-        for (int i = 1; i < numberOfHumans; i++)
-        {
-            if (i < humanSpawnPoints.Count)
-            {
-                //SpawnNonPlayableCharacter(playerPrefab, humanSpawnPoints[i]);
-            }
-        }
-
-        for (int i = 0; i < numberOfZombies; i++)
-        {
-            if (i < zombieSpawnPoints.Count)
-            {
-                //SpawnNonPlayableCharacter(zombiePrefab, zombieSpawnPoints[i]);
-            }
-        }
-    }
-
-    private void SpawnNonPlayableCharacter(GameObject prefab, Vector3 spawnPosition)
-    {
-        if (prefab != null)
-        {
-            GameObject npc = Instantiate(prefab, spawnPosition, Quaternion.identity);
-            // Desactivar el controlador del jugador en los NPCs
-            var playerController = npc.GetComponent<PlayerController>();
-            if (playerController != null)
-            {
-                playerController.enabled = false; // Desactivar el controlador del jugador
-                playerController.uniqueID = uniqueIdGenerator.GenerateUniqueID(); // Asignar un identificador único
-            }
-            Debug.Log($"Personaje no jugable instanciado en {spawnPosition}");
-        }
-    }
     private void UpdateTeamUI()
     {
         if (humansText != null)

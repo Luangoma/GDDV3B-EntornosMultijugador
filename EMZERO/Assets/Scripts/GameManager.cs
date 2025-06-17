@@ -10,7 +10,6 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private GameObject humanPrefab;
     [SerializeField] private GameObject zombiePrefab;
-    [SerializeField] private List<Vector3> spawnPoints; // Asigna desde el inspector o genera dinámicamente
 
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
 
@@ -19,8 +18,7 @@ public class GameManager : NetworkBehaviour
     private int humanNumber;
     private int zombieNumber;
 
-    private List<Vector3> humanSpawnPoints;
-    private List<Vector3> zombieSpawnPoints;
+    private List<Vector3> spawnPoints;
 
     private int nextSpawnIndex = 0;
     public static GameManager Instance { get; private set; }
@@ -125,7 +123,7 @@ public class GameManager : NetworkBehaviour
                 return false;
         }
         // Debe haber al menos 2 jugadores (host + al menos un cliente)
-        return nm.ConnectedClientsIds.Count > 1;
+        return nm.ConnectedClientsIds.Count > 0;
     }
 
     private void OnNetworkSceneLoaded(string sceneName, LoadSceneMode mode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
@@ -136,19 +134,16 @@ public class GameManager : NetworkBehaviour
             CreateSpawnPoints();
             // Aquí el servidor puede spawnear a todos los jugadores
             int aux = 0;
+            GameObject prefab = humanPrefab;
             foreach (var clientId in nm.ConnectedClientsIds)
             {
-                if (aux < humanNumber)
-                {
-                    SpawnClient(clientId, humanSpawnPoints[aux], humanPrefab);
-                }
-                else
-                {
-                    SpawnClient(clientId, zombieSpawnPoints[aux-humanNumber], zombiePrefab);
-                }
+                if (aux >= humanNumber) prefab = zombiePrefab;
+
+                SpawnClient(clientId, spawnPoints[aux], prefab);
+
                 aux++;
             }
-                
+
             //Debug.LogError("GameManager no encontrado en la nueva escena.");
         }
         nm.SceneManager.OnLoadEventCompleted -= OnNetworkSceneLoaded;
@@ -186,8 +181,7 @@ public class GameManager : NetworkBehaviour
     private void CreateSpawnPoints()
     {
         LevelManager lm = FindObjectOfType<LevelManager>();
-        humanSpawnPoints = lm.GetHumanSpawnPoints();
-        zombieSpawnPoints = lm.GetZombieSpawnPoints();
+        spawnPoints = lm.GetSpawnPoints();
     }
 }
 
