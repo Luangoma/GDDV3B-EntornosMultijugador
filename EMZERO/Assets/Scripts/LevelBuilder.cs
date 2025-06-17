@@ -54,8 +54,7 @@ public class LevelBuilder : MonoBehaviour
     private Transform roomParent;
 
     private int CoinsGenerated = 0;
-    private HashSet<Vector3> humanSpawnPoints = new HashSet<Vector3>();
-    private HashSet<Vector3> zombieSpawnPoints = new HashSet<Vector3>();
+    private HashSet<Vector3> SpawnPoints = new HashSet<Vector3>();
 
     #endregion
 
@@ -95,14 +94,7 @@ public class LevelBuilder : MonoBehaviour
 
                 // Calcular spawn points
                 Vector3 spawnPoint = new Vector3(x + roomWidth / 2, 2, z + roomLength / 2);
-                if (i % 2 == 0 && j % 2 == 0)
-                {
-                    humanSpawnPoints.Add(spawnPoint);
-                }
-                else
-                {
-                    zombieSpawnPoints.Add(spawnPoint);
-                }
+                SpawnPoints.Add(spawnPoint);
             }
         }
 
@@ -317,18 +309,9 @@ public class LevelBuilder : MonoBehaviour
     /// Obtiene la lista de puntos de aparición de humanos.
     /// </summary>
     /// <returns>Lista de puntos de aparición de humanos.</returns>
-    public List<Vector3> GetHumanSpawnPoints()
+    public List<Vector3> GetSpawnPoints()
     {
-        return humanSpawnPoints.ToList();
-    }
-
-    /// <summary>
-    /// Obtiene la lista de puntos de aparición de zombies.
-    /// </summary>
-    /// <returns>Lista de puntos de aparición de zombies.</returns>
-    public List<Vector3> GetZombieSpawnPoints()
-    {
-        return zombieSpawnPoints.ToList();
+        return SpawnPoints.ToList();
     }
 
     /// <summary>

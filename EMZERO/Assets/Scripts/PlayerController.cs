@@ -63,8 +63,7 @@ public class PlayerController : NetworkBehaviour
                 Debug.Log("Cámara asignada al jugador local");
                 cameraController.player = this.transform;
             }
-            isZombie = false;
-            SubmitPositionRequestRpc();
+
         }
         else
         {
@@ -227,18 +226,6 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    public void spawnFirstTime()
-    {
-        SubmitPositionRequestRpc();
-    }
-
-    [Rpc(SendTo.Server)]
-    private void SubmitPositionRequestRpc(RpcParams rpcParams = default)
-    {
-        var startPoint = new UnityEngine.Vector3(UnityEngine.Random.Range(3f, 6f), UnityEngine.Random.Range(1f, 3f), UnityEngine.Random.Range(3f, 6f));
-        transform.position = startPoint;
-        Position.Value = startPoint;
-    }
     // Metodo para que el servidor reciba que se ha cogido una moneda adicional
     [ServerRpc]
     public void coinCollectedServerRpc() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
