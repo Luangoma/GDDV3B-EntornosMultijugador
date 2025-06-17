@@ -216,6 +216,16 @@ public class PlayerController : NetworkBehaviour
         {
             CoinsCollected.Value++;
             UpdateCoinUI();
+
+            // Notificar al LevelManager para verificar condiciones
+            if (IsOwner)
+            {
+                LevelManager levelManager = FindObjectOfType<LevelManager>();
+                if (levelManager != null)
+                {
+                    levelManager.CheckWinConditions();
+                }
+            }
         }
     }
 
