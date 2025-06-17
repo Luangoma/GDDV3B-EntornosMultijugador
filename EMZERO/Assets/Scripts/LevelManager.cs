@@ -195,6 +195,13 @@ public class LevelManager : MonoBehaviour
     {
         GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
         ChangeToZombie(currentPlayer, true);
+
+        //Cambiar contadores
+        numberOfHumans--;
+        numberOfZombies++;
+
+        // Verificar condiciones de victoria cuando se tranforme un humano a zombie
+        CheckWinConditions();
     }
 
     public void ChangeToZombie(GameObject human, bool enabled)
@@ -483,6 +490,15 @@ public class LevelManager : MonoBehaviour
             gameModeText.text = $"{minutesRemaining:D2}:{secondsRemaining:D2}";
         }
 
+        //Condición de victoria por sobrevivir
+        if (remainingSeconds <= 0)
+        {
+            remainingSeconds = 0;
+            isGameOver = true;
+            Debug.Log("¡Se acabó el tiempo, los Humanos han sobrevivido!");
+            GameOver("¡Se acabó el tiempo, los Humanos han sobrevivido!");
+        }
+
     }
 
     private void HandleCoinBasedGameMode()
@@ -521,6 +537,63 @@ public class LevelManager : MonoBehaviour
 
         // Cargar la escena del menú principal
         SceneManager.LoadScene("MenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
+    }
+
+    //Habrá que añadir que se lleve a la interfaz de fin de partida, pero de momento con un debug para comprobar que funciona
+    public void CheckWinConditions() 
+    {
+        if (isGameOver) return;
+
+        // Condición 1: Si no quedan humanos, los zombies ganan
+        if (numberOfHumans <= 0)
+        {
+            Debug.Log("¡Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
+            GameOver("¡Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
+            return;
+        }
+
+        // Condición 2: En modo monedas, si los humanos cogen todas las monedas ganan
+        if (gameMode == GameMode.Monedas && playerController != null &&
+            playerController.CoinsCollected.Value >= CoinsGenerated)
+        {
+            Debug.Log("¡Todas las monedas han sido recogidas. Los Humanos ganan!");
+            GameOver("¡Todas las monedas han sido recogidas. Los Humanos ganan!");
+            return;
+        }
+        
+        // Condición 3: Si no quedan zombies, los humanos ganan. Suponiendo los zombies se pueden ir de la partida sin que pete el juego
+        if (numberOfZombies <= 0)
+        {
+            Debug.Log("¡No quedan Zombies. Los Humanos ganan!");
+            GameOver("¡No quedan Zombies. Los Humanos ganan!");
+            return;
+        }
+        
+    }
+
+    private void GameOver(string message)
+    {
+        isGameOver = true;
+        ShowGameOverPanel(message);
+    }
+
+    private void ShowGameOverPanel(string message)
+    {
+        if (gameOverPanel != null)
+        {
+            Time.timeScale = 0f;
+            gameOverPanel.SetActive(true);
+
+            // Buscar el texto donde mostrar el mensaje
+            TextMeshProUGUI resultText = gameOverPanel.GetComponentInChildren<TextMeshProUGUI>();
+            if (resultText != null)
+            {
+                resultText.text = message;
+            }
+
+            Cursor.lockState = CursorLockMode.None;
+            Cursor.visible = true;
+        }
     }
 
     #endregion
