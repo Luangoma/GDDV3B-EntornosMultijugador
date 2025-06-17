@@ -36,7 +36,7 @@ public class LevelBuilder : MonoBehaviour
 
     [Header("Room Settings")]
     [Tooltip("Número total de salas")]
-    [SerializeField] private int numberOfRooms = 1;
+    [SerializeField] private int numberOfRooms = 4;
 
     [Tooltip("Ancho de cada sala")]
     [SerializeField] private int roomWidth = 5;

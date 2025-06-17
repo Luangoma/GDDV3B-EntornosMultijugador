@@ -324,6 +324,16 @@ public class LevelManager : MonoBehaviour
         }
     }
 
+    public List<Vector3> GetHumanSpawnPoints()
+    {
+        return humanSpawnPoints;
+    }
+
+    public List<Vector3> GetZombieSpawnPoints()
+    {
+        return zombieSpawnPoints;
+    }
+
     [ServerRpc]
     private void RequestDestroyServerRpc(GameObject currentPlayer)
     {

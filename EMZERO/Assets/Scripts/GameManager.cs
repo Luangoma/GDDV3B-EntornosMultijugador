@@ -8,19 +8,19 @@ using UnityEngine.SceneManagement;
 public class GameManager : NetworkBehaviour
 {
 
-    [SerializeField] private GameObject playerPrefab;
+    [SerializeField] private GameObject humanPrefab;
+    [SerializeField] private GameObject zombiePrefab;
     [SerializeField] private List<Vector3> spawnPoints; // Asigna desde el inspector o genera dinámicamente
+
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
 
 
     // Centros de las habitaciones
-    private List<Vector3> humanSpawnPoints = new List<Vector3>
-    {
-        new Vector3(4f, 2f, 4f),
-        new Vector3(8f, 2f, 4f),
-        new Vector3(4f, 2f, 8f),
-        new Vector3(8f, 2f, 8f)
-    };
+    private int humanNumber;
+    private int zombieNumber;
+
+    private List<Vector3> humanSpawnPoints;
+    private List<Vector3> zombieSpawnPoints;
 
     private int nextSpawnIndex = 0;
     public static GameManager Instance { get; private set; }
@@ -69,14 +69,10 @@ public class GameManager : NetworkBehaviour
         }
 
     }
-    // Update is called once per frame
-    void Update()
-    {
 
-    }
     public override void OnNetworkSpawn()
     {
-        if (playerPrefab == null)
+        if (humanPrefab == null || zombiePrefab == null)
         {
             Debug.LogError("playerPrefab no asignado en GameManager.");
             return;
@@ -86,39 +82,20 @@ public class GameManager : NetworkBehaviour
     private void HandleClientConnected(ulong clientId)
     {
         if (!IsServer) return;
-        //SpawnClient(clientId);
         readyStates[clientId] = false;
         Debug.Log($"Client {clientId} connected");
     }
 
-    public void SpawnClient(ulong clientId)
+    public void SpawnClient(ulong clientId, Vector3 spawnPos, GameObject prefab)
     {
         if (!IsServer) return; // Solo el servidor debe spawnear
-
-        int playerIndex = (int)clientId % humanSpawnPoints.Count;
-        Vector3 spawnPos = humanSpawnPoints[playerIndex];
 
         Debug.Log($"Spawning {clientId} player");
 
         // Solo el servidor ejecuta esto
-        if (nextSpawnIndex >= humanSpawnPoints.Count)
-        {
-            Debug.LogWarning("No hay más habitaciones libres para spawnear jugadores.");
-            return;
-        }
-        nextSpawnIndex++;
-        GameObject player = Instantiate(playerPrefab, spawnPos, Quaternion.identity);
+
+        GameObject player = Instantiate(prefab, spawnPos, Quaternion.identity);
         player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
-    }
-
-    public void StartGame()
-    {
-        Debug.Log("Starting game with all players ready.");
-        foreach (var clientId in nm.ConnectedClientsIds)
-        {
-            SpawnClient(clientId);
-        }
-
     }
     private void HandleClientDisconnected(ulong clientId)
     {
@@ -155,9 +132,23 @@ public class GameManager : NetworkBehaviour
     {
         if (sceneName == "GameScene" && nm.IsServer)
         {
+            CreateTeams();
+            CreateSpawnPoints();
             // Aquí el servidor puede spawnear a todos los jugadores
+            int aux = 0;
             foreach (var clientId in nm.ConnectedClientsIds)
-                SpawnClient(clientId);
+            {
+                if (aux < humanNumber)
+                {
+                    SpawnClient(clientId, humanSpawnPoints[aux], humanPrefab);
+                }
+                else
+                {
+                    SpawnClient(clientId, zombieSpawnPoints[aux-humanNumber], zombiePrefab);
+                }
+                aux++;
+            }
+                
             //Debug.LogError("GameManager no encontrado en la nueva escena.");
         }
         nm.SceneManager.OnLoadEventCompleted -= OnNetworkSceneLoaded;
@@ -184,4 +175,19 @@ public class GameManager : NetworkBehaviour
             nm.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
         }
     }
+
+    private void CreateTeams()
+    {
+        int players = nm.ConnectedClientsList.Count;
+        humanNumber = (players % 2 == 0) ? players / 2 : (players / 2) + 1;
+        zombieNumber = players / 2;
+    }
+
+    private void CreateSpawnPoints()
+    {
+        LevelManager lm = FindObjectOfType<LevelManager>();
+        humanSpawnPoints = lm.GetHumanSpawnPoints();
+        zombieSpawnPoints = lm.GetZombieSpawnPoints();
+    }
 }
+

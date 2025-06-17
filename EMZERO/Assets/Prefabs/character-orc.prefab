@@ -185,6 +185,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 312a90f3167a5de4ba1d0027d4f7fd8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  playerCameraPrefab: {fileID: 336062020537768177, guid: fabbbb735e20308429776c1cefff5ad7, type: 3}
   CoinsCollected:
     m_InternalValue: 0
   isZombie: 0
