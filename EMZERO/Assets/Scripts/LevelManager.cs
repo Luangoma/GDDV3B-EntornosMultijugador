@@ -22,11 +22,6 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private GameObject zombiePrefab;
 
     [Header("Team Settings")]
-    [Tooltip("Número de jugadores humanos")]
-    [SerializeField] private int numberOfHumans = 2;
-
-    [Tooltip("Número de zombis")]
-    [SerializeField] private int numberOfZombies = 2;
 
     [Header("Game Mode Settings")]
     [Tooltip("Selecciona el modo de juego")]
@@ -36,13 +31,6 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private int minutes = 5;
 
     private List<Vector3> SpawnPoints = new List<Vector3>();
-
-    // Referencias a los elementos de texto en el canvas
-    private TextMeshProUGUI humansText;
-    private TextMeshProUGUI zombiesText;
-    private TextMeshProUGUI gameModeText;
-
-    private int CoinsGenerated = 0;
 
     public string PlayerPrefabName => playerPrefab.name;
     public string ZombiePrefabName => zombiePrefab.name;
@@ -81,60 +69,15 @@ public class LevelManager : MonoBehaviour
         levelBuilder = GetComponent<LevelBuilder>();
 
         // Obtener la referencia al GameManager
-        gm = FindObjectOfType<GameManager>();
+        gm = GameManager.Instance;
 
         Time.timeScale = 1f; // Asegurarse de que el tiempo no esté detenido
         if (levelBuilder != null)
         {
             levelBuilder.Build();
             SpawnPoints = levelBuilder.GetSpawnPoints();
-            CoinsGenerated = levelBuilder.GetCoinsGenerated();
+            gm.SetTotalCoins(levelBuilder.GetCoinsGenerated());
         }
-    }
-
-    private void Start()
-    {
-        Debug.Log("Iniciando el nivel");
-        // Buscar el objeto "CanvasPlayer" en la escena
-        GameObject canvas = GameObject.Find("CanvasPlayer");
-        if (canvas != null)
-        {
-            Debug.Log("Canvas encontrado");
-
-            // Buscar el Panel dentro del CanvasHud
-            Transform panel = canvas.transform.Find("PanelHud");
-            if (panel != null)
-            {
-                // Buscar los TextMeshProUGUI llamados "HumansValue" y "ZombiesValue" dentro del Panel
-                Transform humansTextTransform = panel.Find("HumansValue");
-                Transform zombiesTextTransform = panel.Find("ZombiesValue");
-                Transform gameModeTextTransform = panel.Find("GameModeConditionValue");
-
-                if (humansTextTransform != null)
-                {
-                    humansText = humansTextTransform.GetComponent<TextMeshProUGUI>();
-                }
-
-                if (zombiesTextTransform != null)
-                {
-                    zombiesText = zombiesTextTransform.GetComponent<TextMeshProUGUI>();
-                }
-
-                if (gameModeTextTransform != null)
-                {
-                    gameModeText = gameModeTextTransform.GetComponent<TextMeshProUGUI>();
-                }
-            }
-        }
-
-        remainingSeconds = minutes * 60;
-
-        // Obtener los puntos de aparición y el número de monedas generadas desde LevelBuilder
-
-
-        //SpawnTeams();
-
-        UpdateTeamUI();
     }
 
     private void Update()
@@ -147,7 +90,7 @@ public class LevelManager : MonoBehaviour
         else if (gameMode == GameMode.Monedas)
         {
             // Lógica para el modo de juego basado en monedas
-            HandleCoinBasedGameMode();
+            //HandleCoinBasedGameMode();
         }
 
         if (Input.GetKeyDown(KeyCode.Z)) // Presiona "Z" para convertirte en Zombie
@@ -176,7 +119,7 @@ public class LevelManager : MonoBehaviour
                 Debug.Log("El jugador actual no es un zombie.");
             }
         }
-        UpdateTeamUI();
+        //UpdateTeamUI();
 
         if (isGameOver)
         {
@@ -196,8 +139,7 @@ public class LevelManager : MonoBehaviour
         ChangeToZombie(currentPlayer, true);
 
         //Cambiar contadores
-        numberOfHumans--;
-        numberOfZombies++;
+        GameManager.Instance.ConvertHuman();
 
         // Verificar condiciones de victoria cuando se tranforme un humano a zombie
         CheckWinConditions();
@@ -228,9 +170,8 @@ public class LevelManager : MonoBehaviour
                 playerController.enabled = enabled;
                 playerController.isZombie = true; // Cambiar el estado a zombie
                 playerController.uniqueID = uniqueID; // Mantener el identificador único
-                numberOfHumans--; // Reducir el número de humanos
-                numberOfZombies++; // Aumentar el número de zombis
-                UpdateTeamUI();
+                GameManager.Instance.ConvertHuman();
+                //UpdateTeamUI();
 
                 if (enabled)
                 {
@@ -311,8 +252,8 @@ public class LevelManager : MonoBehaviour
                     playerController.enabled = true;
                     playerController.cameraTransform = mainCamera.transform;
                     playerController.isZombie = false; // Cambiar el estado a humano
-                    numberOfHumans++; // Aumentar el número de humanos
-                    numberOfZombies--; // Reducir el número de zombis
+                    //numberOfHumans++; // Aumentar el número de humanos
+                    //numberOfZombies--; // Reducir el número de zombis
                 }
                 else
                 {
@@ -344,19 +285,6 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    private void UpdateTeamUI()
-    {
-        if (humansText != null)
-        {
-            humansText.text = $"{numberOfHumans}";
-        }
-
-        if (zombiesText != null)
-        {
-            zombiesText.text = $"{numberOfZombies}";
-        }
-    }
-
     #endregion
 
     #region Modo de juego
@@ -381,10 +309,10 @@ public class LevelManager : MonoBehaviour
         int secondsRemaining = Mathf.FloorToInt(remainingSeconds % 60);
 
         // Actualizar el texto de la interfaz de usuario
-        if (gameModeText != null)
-        {
-            gameModeText.text = $"{minutesRemaining:D2}:{secondsRemaining:D2}";
-        }
+        //if (gameModeText != null)
+        //{
+        //   gameModeText.text = $"{minutesRemaining:D2}:{secondsRemaining:D2}";
+        //}
 
         //Condición de victoria por sobrevivir
         if (remainingSeconds <= 0)
@@ -397,20 +325,20 @@ public class LevelManager : MonoBehaviour
 
     }
 
-    private void HandleCoinBasedGameMode()
+    /*private void HandleCoinBasedGameMode()
     {
         if (isGameOver) return;
 
         // Implementar la lógica para el modo de juego basado en monedas
         if (gameModeText != null && playerController != null)
         {
-            gameModeText.text = $"{playerController.CoinsCollected}/{CoinsGenerated}";
-            if (playerController.CoinsCollected.Value == CoinsGenerated)
+            gameModeText.text = $"{gm.collectedCoins.Value}/{gm.totalCoins.Value}";
+            if (gm.collectedCoins.Value == gm.totalCoins.Value)
             {
                 isGameOver = true;
             }
         }
-    }
+    }*/
 
     private void ShowGameOverPanel()
     {
@@ -441,7 +369,7 @@ public class LevelManager : MonoBehaviour
         if (isGameOver) return;
 
         // Condición 1: Si no quedan humanos, los zombies ganan
-        if (numberOfHumans <= 0)
+        if (GameManager.Instance.humanNumber.Value <= 0)
         {
             Debug.Log("¡Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
             GameOver("¡Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
@@ -450,7 +378,7 @@ public class LevelManager : MonoBehaviour
 
         // Condición 2: En modo monedas, si los humanos cogen todas las monedas ganan
         if (gameMode == GameMode.Monedas && playerController != null &&
-            playerController.CoinsCollected.Value >= CoinsGenerated)
+            gm.collectedCoins.Value >= gm.totalCoins.Value)
         {
             Debug.Log("¡Todas las monedas han sido recogidas. Los Humanos ganan!");
             GameOver("¡Todas las monedas han sido recogidas. Los Humanos ganan!");
@@ -458,7 +386,7 @@ public class LevelManager : MonoBehaviour
         }
         
         // Condición 3: Si no quedan zombies, los humanos ganan. Suponiendo los zombies se pueden ir de la partida sin que pete el juego
-        if (numberOfZombies <= 0)
+        if (GameManager.Instance.zombieNumber.Value <= 0)
         {
             Debug.Log("¡No quedan Zombies. Los Humanos ganan!");
             GameOver("¡No quedan Zombies. Los Humanos ganan!");

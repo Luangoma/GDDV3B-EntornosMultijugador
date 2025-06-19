@@ -7,20 +7,17 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : NetworkBehaviour
 {
+    const int MINSEED = 0;
+    const int MAXSEED = 25000;
 
     [SerializeField] private GameObject humanPrefab;
     [SerializeField] private GameObject zombiePrefab;
 
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
 
-
-    // Centros de las habitaciones
-    private int humanNumber;
-    private int zombieNumber;
-
+    // Centros de las habitaciones - las saca del level builder
     private List<Vector3> spawnPoints;
 
-    private int nextSpawnIndex = 0;
     public static GameManager Instance { get; private set; }
     public GameMode modo;
     public string codigo;
@@ -28,6 +25,17 @@ public class GameManager : NetworkBehaviour
     public float densidad;
     private NetworkManager nm;
 
+    #region Variables compartidas
+
+    public NetworkVariable<int> humanNumber = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
+    public NetworkVariable<int> zombieNumber = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
+
+    public NetworkVariable<int> totalCoins = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
+    public NetworkVariable<int> collectedCoins = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
+    public NetworkVariable<float> timeRemaining = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
+    public NetworkVariable<int> mapSeed = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
+
+    #endregion
     public void Awake()
     {
         if (Instance == null)
@@ -49,6 +57,7 @@ public class GameManager : NetworkBehaviour
         {
             nm.OnClientConnectedCallback += HandleClientConnected;
             nm.OnClientDisconnectCallback += HandleClientDisconnected;
+            mapSeed.Value = UnityEngine.Random.Range(MINSEED, MAXSEED);
         }
         // Añadir el host a readyStates
         ulong hostId = nm.LocalClientId;
@@ -137,7 +146,7 @@ public class GameManager : NetworkBehaviour
             GameObject prefab = humanPrefab;
             foreach (var clientId in nm.ConnectedClientsIds)
             {
-                if (aux >= humanNumber) prefab = zombiePrefab;
+                if (aux >= humanNumber.Value) prefab = zombiePrefab;
 
                 SpawnClient(clientId, spawnPoints[aux], prefab);
 
@@ -174,8 +183,8 @@ public class GameManager : NetworkBehaviour
     private void CreateTeams()
     {
         int players = nm.ConnectedClientsList.Count;
-        humanNumber = (players % 2 == 0) ? players / 2 : (players / 2) + 1;
-        zombieNumber = players / 2;
+        humanNumber.Value = (players % 2 == 0) ? players / 2 : (players / 2) + 1;
+        zombieNumber.Value = players / 2;
     }
 
     private void CreateSpawnPoints()
@@ -183,5 +192,39 @@ public class GameManager : NetworkBehaviour
         LevelManager lm = FindObjectOfType<LevelManager>();
         spawnPoints = lm.GetSpawnPoints();
     }
+
+    public int GetSeed()
+    {
+        return mapSeed.Value;
+    }
+
+    public void SetTotalCoins(int coins)
+    {
+        totalCoins.Value = coins;
+    }
+
+    public void ConvertHuman()
+    {
+        humanNumber.Value--;
+        zombieNumber.Value++;
+    }
+
+    [ServerRpc(RequireOwnership = false)]
+    public void TryConvertServerRpc(ulong id)
+    {
+        if (!IsServer) return;
+        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject obj))
+        {
+            PlayerController player = obj.GetComponent<PlayerController>();
+            if (player != null && !player.isZombie)
+            {
+                //Convertir el humano
+                ConvertHuman();
+
+            }
+
+        }
+    }
+
 }
 

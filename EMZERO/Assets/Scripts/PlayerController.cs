@@ -1,4 +1,5 @@
 using System;
+using System.Xml.Serialization;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -7,12 +8,11 @@ using UnityEngine.UIElements;
 
 public class PlayerController : NetworkBehaviour
 {
-    private TextMeshProUGUI coinText;
+
+
     System.Random rand = new System.Random();
     [SerializeField] private GameObject playerCameraPrefab;
     [Header("Stats")]
-    // Ahora es variable compartida -- En un foro vi cosas de permisos como NetworkVariableReading.everyone o algo asi
-    public NetworkVariable<int> CoinsCollected = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Header("Character settings")]
     public bool isZombie = false; // Añadir una propiedad para el estado del jugador
@@ -27,12 +27,26 @@ public class PlayerController : NetworkBehaviour
     private float horizontalInput;         // Entrada horizontal (A/D o flechas)
     private float verticalInput;           // Entrada vertical (W/S o flechas)
 
+    #region Variables compartidas/game manager
     private NetworkVariable<Quaternion> Rotation = new NetworkVariable<Quaternion>();
-
     private NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
+
+    GameManager gameManager;
+
+    #endregion
+
+    #region UIs
+    private TextMeshProUGUI coinText;
+    private TextMeshProUGUI humansText;
+    private TextMeshProUGUI zombiesText;
+    private TextMeshProUGUI gameModeText;
+    #endregion
+
+
 
     public override void OnNetworkSpawn()
     {
+        gameManager = GameManager.Instance;
         if (IsOwner)
         {
             // Asigna la cámara principal a este jugador local
@@ -71,14 +85,20 @@ public class PlayerController : NetworkBehaviour
             Rotation.OnValueChanged += OnRotationChanged;
         }
 
-        CoinsCollected.OnValueChanged += OnCoinsIncreased;
+        gameManager.collectedCoins.OnValueChanged += OnCoinsIncreased;
+        gameManager.zombieNumber.OnValueChanged += OnTeamChange;
+        gameManager.humanNumber.OnValueChanged += OnTeamChange;
     }
 
     // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
     private void OnCoinsIncreased(int previousValue, int newValue)
     {
-        CoinsCollected.Value = newValue;
         UpdateCoinUI();
+    }
+
+    private void OnTeamChange(int previousValue, int newValue)
+    {
+        UpdateTeamUI();
     }
 
     // Este metodo se dispara para cada cliente en el momento de que la networkVariable Position cambie
@@ -91,7 +111,7 @@ public class PlayerController : NetworkBehaviour
     {
         transform.rotation = newRot;
     }
-    
+
 
     // Metodo cutre preliminar que asigna el contolador del host a uno de los jugadores ya instanciados
     //public override void OnNetworkSpawn()
@@ -116,40 +136,58 @@ public class PlayerController : NetworkBehaviour
         // Todo esto solo funciona en la escena de la partida, porque el canvas no existe en el menu
         // -----------------------------------------------------------------------------------------
         // Buscar el objeto "CanvasPlayer" en la escena
+        CanvasStart();
+
+    }
+
+    private void CanvasStart()
+    {
+        if (!IsOwner)
+        {
+            // Si no eres owner, no tienes camara
+            cameraTransform = null;
+            return;
+        }
         GameObject canvas = GameObject.Find("CanvasPlayer");
 
         if (canvas != null)
         {
-            if (IsOwner)
-            {
-                cameraTransform = Camera.main.transform;
-                // Instanciar una nueva cámara solo para este cliente
-                //GameObject cameraObj = Instantiate(cameraPrefab);
-                //cameraTransform = cameraObj.GetComponent<Camera>().transform;
-            }
-            else
-            {
-                // Si no eres owner, no tienes camara
-                cameraTransform = null;
-            }
-            Debug.Log("Canvas encontrado");
 
-            // Buscar el Panel dentro del CanvasHud
+            cameraTransform = Camera.main.transform;
             Transform panel = canvas.transform.Find("PanelHud");
+
             if (panel != null)
             {
                 // Buscar el TextMeshProUGUI llamado "CoinsValue" dentro del Panel
                 Transform coinTextTransform = panel.Find("CoinsValue");
+                Transform humansTextTransform = panel.Find("HumansValue");
+                Transform zombiesTextTransform = panel.Find("ZombiesValue");
+                Transform gameModeTextTransform = panel.Find("GameModeConditionValue");
+
                 if (coinTextTransform != null)
                 {
                     coinText = coinTextTransform.GetComponent<TextMeshProUGUI>();
                 }
+
+                if (humansTextTransform != null)
+                {
+                    humansText = humansTextTransform.GetComponent<TextMeshProUGUI>();
+                }
+
+                if (zombiesTextTransform != null)
+                {
+                    zombiesText = zombiesTextTransform.GetComponent<TextMeshProUGUI>();
+                }
+
+                if (gameModeTextTransform != null)
+                {
+                    gameModeText = gameModeTextTransform.GetComponent<TextMeshProUGUI>();
+                }
             }
             UpdateCoinUI();
+            UpdateTeamUI();
         }
-
     }
-
     void Update()
     {
         // El jugador solamente controla su personaje
@@ -165,7 +203,7 @@ public class PlayerController : NetworkBehaviour
 
         // Mover el jugador
         MovePlayer();
-        
+
         // Manejar las animaciones del jugador
         HandleAnimations();
     }
@@ -197,11 +235,11 @@ public class PlayerController : NetworkBehaviour
     }
     private void OnDestroy()
     {
-        Rotation.OnValueChanged -= OnRotationChanged;        
+        Rotation.OnValueChanged -= OnRotationChanged;
         Position.OnValueChanged -= OnPositionChanged;
-        
+
     }
-    
+
 
     void HandleAnimations()
     {
@@ -211,20 +249,11 @@ public class PlayerController : NetworkBehaviour
 
     public void CoinCollected()
     {
+        if (!IsServer) return;
         if (!isZombie) // Solo los humanos pueden recoger monedas
         {
-            CoinsCollected.Value++;
+            gameManager.collectedCoins.Value++;
             UpdateCoinUI();
-
-            // Notificar al LevelManager para verificar condiciones
-            if (IsOwner)
-            {
-                LevelManager levelManager = FindObjectOfType<LevelManager>();
-                if (levelManager != null)
-                {
-                    levelManager.CheckWinConditions();
-                }
-            }
         }
     }
 
@@ -232,27 +261,21 @@ public class PlayerController : NetworkBehaviour
     {
         if (coinText != null)
         {
-            coinText.text = $"{CoinsCollected.Value}";
+            coinText.text = $"{gameManager.collectedCoins.Value}";
         }
     }
 
-    // Metodo para que el servidor reciba que se ha cogido una moneda adicional
-    [ServerRpc]
-    public void coinCollectedServerRpc() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
+    private void UpdateTeamUI()
     {
-        CoinsCollected.Value++;
-        //UpdateCoinOnlineClientRpc(CoinsCollected.Value);
-        UpdateCoinUI();
-    }
+        if (humansText != null)
+        {
+            humansText.text = $"{GameManager.Instance.humanNumber.Value}";
+        }
 
-    // Metodo que se llamara cuando el servidor mande un mensajito
-    // Transferir la nueva data de las monedas a todas las interfaces
-    // Porque en teoria las interfaces no son comunes
-    [ClientRpc]
-    void UpdateCoinOnlineClientRpc(int coins)
-    {
-        CoinsCollected.Value = coins;
-        UpdateCoinUI();
+        if (zombiesText != null)
+        {
+            zombiesText.text = $"{GameManager.Instance.zombieNumber.Value}";
+        }
     }
 
     // Actualizar del movimiento del personaje al servidor en tiempo real
@@ -269,7 +292,6 @@ public class PlayerController : NetworkBehaviour
         transform.rotation = quaternion;
         Rotation.Value = quaternion;
     }
-
 
     /// <summary>
     /// Temporal para pruebas ! ! ! ! ! !  ! ! ! ! ! ! !  ! ! ! !  ! 

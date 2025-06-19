@@ -72,6 +72,7 @@ public class LevelBuilder : MonoBehaviour
 
     public void Build()
     {
+        Random.InitState(GameManager.Instance.GetSeed());
         CreateRooms(roomWidth, roomLength, numberOfRooms);
     }
 
