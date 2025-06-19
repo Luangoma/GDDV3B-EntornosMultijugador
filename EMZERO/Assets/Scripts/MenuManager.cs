@@ -4,52 +4,63 @@ using Unity.Netcode;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MenuManager : MonoBehaviour
 {
     public List<GameObject> pantallas = new List<GameObject>();
     public Stack<GameObject> historial = new Stack<GameObject>();
+    public List<Button> buttons;
+    public List<Button> atrasButtons;
     private GameManager gm;
     private NetworkManager nm;
-
-    public enum PantallaEnum : int
-    {
-        PantallaMenuInicio = 0,
-        Pantallaclientehostseleccion = 1,
-        Pantallacliente = 2,
-        Pantallamodo = 3,
-        Pantallamodomonedas = 4,
-        Pantallamodotiempo = 5,
-        PantallaLoby = 6,
-    }
+    /*
+     * PantallaMenuInicio = 0,
+     * PantallaClienteHostSeleccion = 1,
+     * PantallaCliente = 2,
+     * PantallaModo = 3,
+     * PantallaModoMonedas = 4,
+     * PantallaModoTiempo = 5,
+     * PantallaLobyHostMonedas = 6,
+     * PantallaLobyHostTiempo = 7,
+     * PantallaLobyCliente = 8,
+     */
+    private List<int> screens = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
+    private List<int> screenSelect = new List<int>() { 1, 3, 2, 7, 4, 5, 6, 6 };
 
     public enum GameConnection : int
     {
-        Cliente = 0,
-        Servidor = 1,
-        Host = 2
+        Cliente,
+        Servidor,
+        Host
     }
 
     public GameObject actual;
     public GameConnection conxion;
+
+    #region NetworkBehaviour
     public void Awake()
     {
         Time.timeScale = 1f; // Asegúrate de que el tiempo está restaurado al cargar la escena
-        actual = pantallas[(int)PantallaEnum.PantallaMenuInicio];
+        actual = pantallas[screens[0]];
     }
     public void Start()
     {
         gm = GameManager.Instance;
         nm = NetworkManager.Singleton;
+        for (var i = 0; i < buttons.Count; i++)
+        {
+            int pantalla = screens[screenSelect[i]];
+            buttons[i].onClick.AddListener(delegate { CambioPantalla(pantalla); });
+        }
+        foreach (var item in atrasButtons)
+        {
+            item.onClick.AddListener(delegate { CambiarEscenaAtras(); });
+        }
+
     }
-
-
-
+    #endregion  
     #region Navegacion entre pantallas
-    public GameObject EasyP(PantallaEnum pantalla)
-    {
-        return pantallas[(int)pantalla];
-    }
     public void StartGameFromMenuScene()
     {
         SceneManager.LoadScene("GameScene"); // Cambia "MainScene" por el nombre de tu escena principal
@@ -58,8 +69,12 @@ public class MenuManager : MonoBehaviour
     }
     public void CambiarEscenaAdelante()
     {
-        historial.Push(actual);
+        AddSceneForward();
         actual.gameObject.SetActive(false);
+    }
+    public void AddSceneForward()
+    {
+        historial.Push(actual);
     }
     public void CambiarEscenaAtras()
     {
@@ -69,53 +84,32 @@ public class MenuManager : MonoBehaviour
     }
     #endregion
     #region Pantallas
-    public void PantallaClienteHost()
+    public void CambioPantalla(int escena)
     {
-        //SceneManager.LoadScene("GameScene"); // Cambia "MainScene" por el nombre de tu escena principal
-        actual = EasyP(PantallaEnum.Pantallaclientehostseleccion);
-        actual.gameObject.SetActive(true);
-    }
-    public void PantallaCliente()
-    {
-        actual = EasyP(PantallaEnum.Pantallacliente);
-        actual.gameObject.SetActive(true);
-    }
-    public void PantallaModo()
-    {
-        actual = EasyP(PantallaEnum.Pantallamodo);
-        actual.gameObject.SetActive(true);
-    }
-    public void PantallaModoMonedas()
-    {
-        gm.modo = GameMode.Monedas;
-        actual = EasyP(PantallaEnum.Pantallamodomonedas);
-        actual.gameObject.SetActive(true);
-
-    }
-    public void PantallaModoTiempo()
-    {
-        gm.modo = GameMode.Tiempo;
-        actual = EasyP(PantallaEnum.Pantallamodotiempo);
-        actual.gameObject.SetActive(true);
-    }
-    public void PantallaLoby()
-    {
-        actual = EasyP(PantallaEnum.PantallaLoby); 
+        actual = pantallas[escena];
         actual.gameObject.SetActive(true);
     }
     #endregion
     #region Setters
     public void setCodigoSala(string sala)
     {
-        gm.codigo = sala;
+        gm.codigo.Value = new GameManager.NetString() { Value = sala };
     }
     public void setTiempo(int tiempo)
     {
-        gm.tiempo = tiempo;
+        gm.tiempo.Value = tiempo;
     }
     public void setDensidadMonedas(float densidad)
     {
-        gm.densidad = densidad;
+        gm.densidad.Value = densidad;
+    }
+    public void setModoMonedas()
+    {
+        gm.modo.Value = GameMode.Monedas;
+    }
+    public void setModoTiempo()
+    {
+        gm.modo.Value = GameMode.Tiempo;
     }
     public void setHost()
     {

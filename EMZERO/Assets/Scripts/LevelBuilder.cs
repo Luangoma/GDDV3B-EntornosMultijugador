@@ -70,8 +70,9 @@ public class LevelBuilder : MonoBehaviour
 
     #region World building methods
 
-    public void Build()
+    public void Build(float valor)
     {
+        coinsDensity = valor;
         CreateRooms(roomWidth, roomLength, numberOfRooms);
     }
 

@@ -22,12 +22,12 @@ public class GameManager : NetworkBehaviour
 
     private int nextSpawnIndex = 0;
     public static GameManager Instance { get; private set; }
-    public GameMode modo;
-    public string codigo;
-    public float tiempo;
-    public float densidad;
+    public NetworkVariable<GameMode> modo = new NetworkVariable<GameMode>(GameMode.Monedas, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<NetString> codigo = new NetworkVariable<NetString>(new NetString(){Value=""}, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<int> tiempo = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<float> densidad = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkManager nm;
-
+    public NetworkVariable<int> CoinsCollected = new NetworkVariable<int>(0);
     public void Awake()
     {
         if (Instance == null)
@@ -38,6 +38,30 @@ public class GameManager : NetworkBehaviour
         else
         {
             Destroy(this); // Esto evita múltiples instancias
+        }
+    }
+
+    public struct NetString : INetworkSerializable, IEquatable<NetString>
+    {
+        public string Value;
+
+        public bool Equals(NetString other)
+        {
+            return Value == other.Value;
+        }
+
+        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
+        {
+            if (serializer.IsReader)
+            {
+                var reader = serializer.GetFastBufferReader();
+                reader.ReadValueSafe(out Value);
+            }
+            else
+            {
+                var writter = serializer.GetFastBufferWriter();
+                writter.WriteValueSafe(Value);
+            }
         }
     }
 
