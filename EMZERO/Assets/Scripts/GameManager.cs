@@ -28,6 +28,13 @@ public class GameManager : NetworkBehaviour
     public float densidad;
     private NetworkManager nm;
 
+    public NetworkVariable<int> humansAlive = new NetworkVariable<int>();
+    public NetworkVariable<int> zombiesAlive = new NetworkVariable<int>();
+    public NetworkVariable<int> coinsCollected = new NetworkVariable<int>();
+    public NetworkVariable<bool> isGameOver = new NetworkVariable<bool>();
+    public NetworkVariable<GameMode> currentGameMode = new NetworkVariable<GameMode>();
+    public NetworkVariable<float> remainingTime = new NetworkVariable<float>();
+
     public void Awake()
     {
         if (Instance == null)
@@ -49,6 +56,10 @@ public class GameManager : NetworkBehaviour
         {
             nm.OnClientConnectedCallback += HandleClientConnected;
             nm.OnClientDisconnectCallback += HandleClientDisconnected;
+            currentGameMode.Value = modo; // Asigna el modo de juego
+            remainingTime.Value = tiempo * 60; //Minutos a segundos
+
+
         }
         // Añadir el host a readyStates
         ulong hostId = nm.LocalClientId;
@@ -58,6 +69,20 @@ public class GameManager : NetworkBehaviour
             Debug.Log($"Host (clientId {hostId}) añadido a readyStates.");
         }
     }
+
+    void Update()
+    {
+        if (IsServer && !isGameOver.Value && currentGameMode.Value == GameMode.Tiempo)
+        {
+            remainingTime.Value -= Time.deltaTime;
+            if (remainingTime.Value <= 0)
+            {
+                remainingTime.Value = 0;
+                EndGame("Los humanos han sobrevivido");
+            }
+        }
+    }
+
     public override void OnDestroy()
     {
         if (IsServer && nm != null)
@@ -182,6 +207,83 @@ public class GameManager : NetworkBehaviour
     {
         LevelManager lm = FindObjectOfType<LevelManager>();
         spawnPoints = lm.GetSpawnPoints();
+    }
+
+    [ServerRpc]
+    public void NotifyCoinCollectedServerRpc()
+    {
+        if (isGameOver.Value) return;
+
+        coinsCollected.Value++;
+        Debug.Log($"Monedas recolectadas: {coinsCollected.Value}/{FindObjectOfType<LevelBuilder>().GetCoinsGenerated()}");
+
+        if (currentGameMode.Value == GameMode.Monedas)
+        {
+            int totalCoins = FindObjectOfType<LevelBuilder>().GetCoinsGenerated();
+            if (coinsCollected.Value >= totalCoins)
+            {
+                Debug.Log("¡Los humanos han recogido todas las monedas!");
+                EndGame("¡Los Humanos ganan! Han recogido todas las monedas");
+            }
+        }
+    }
+
+    [ServerRpc]
+    public void NotifyPlayerTransformedServerRpc(bool becameZombie)
+    {
+        if (isGameOver.Value) return;
+
+        if (becameZombie)
+        {
+            humansAlive.Value--;
+            zombiesAlive.Value++;
+        }
+        else
+        {
+            humansAlive.Value++;
+            zombiesAlive.Value--;
+        }
+        CheckWinConditionsServerRpc();
+    }
+
+    [ServerRpc]
+    private void CheckWinConditionsServerRpc()
+    {
+        if (isGameOver.Value) return;
+
+        // Zombies ganan si no quedan humanos
+        if (humansAlive.Value <= 0)
+        {
+            EndGame("¡Los Zombies ganan!");
+            return;
+        }
+
+        // Verificar condiciones según el modo de juego
+        if (currentGameMode.Value == GameMode.Monedas)
+        {
+            int totalCoins = FindObjectOfType<LevelBuilder>().GetCoinsGenerated();
+            if (coinsCollected.Value >= totalCoins)
+            {
+                EndGame("¡Los Humanos ganan! Han recogido todas las monedas");
+                return;
+            }
+        }
+        else if (currentGameMode.Value == GameMode.Tiempo)
+        {
+            // La condición de tiempo se maneja en LevelManager
+        }
+    }
+
+    [ClientRpc]
+    private void EndGameClientRpc(string message)
+    {
+        FindObjectOfType<LevelManager>().ShowGameOverPanel(message);
+    }
+
+    public void EndGame(string message)
+    {
+        isGameOver.Value = true;
+        EndGameClientRpc(message);
     }
 }
 

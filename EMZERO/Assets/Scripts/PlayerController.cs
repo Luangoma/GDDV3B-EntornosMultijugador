@@ -31,6 +31,8 @@ public class PlayerController : NetworkBehaviour
 
     private NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
 
+    private GameManager gm;
+
     public override void OnNetworkSpawn()
     {
         if (IsOwner)
@@ -116,6 +118,9 @@ public class PlayerController : NetworkBehaviour
         // Todo esto solo funciona en la escena de la partida, porque el canvas no existe en el menu
         // -----------------------------------------------------------------------------------------
         // Buscar el objeto "CanvasPlayer" en la escena
+
+        gm = FindObjectOfType<GameManager>();
+
         GameObject canvas = GameObject.Find("CanvasPlayer");
 
         if (canvas != null)
@@ -211,21 +216,23 @@ public class PlayerController : NetworkBehaviour
 
     public void CoinCollected()
     {
-        if (!isZombie) // Solo los humanos pueden recoger monedas
+        if (!isZombie && IsOwner)
         {
-            CoinsCollected.Value++;
-            UpdateCoinUI();
-
-            // Notificar al LevelManager para verificar condiciones
-            if (IsOwner)
-            {
-                LevelManager levelManager = FindObjectOfType<LevelManager>();
-                if (levelManager != null)
-                {
-                    levelManager.CheckWinConditions();
-                }
-            }
+            Debug.Log($"Moneda recolectada por humano. Actual: {CoinsCollected.Value}");
+            RequestCoinCollectionServerRpc();
         }
+    }
+
+    [ServerRpc]
+    private void RequestCoinCollectionServerRpc()
+    {
+        // Incrementar las monedas del jugador
+        CoinsCollected.Value++;
+
+        // Notificar al GameManager
+        GameManager.Instance.NotifyCoinCollectedServerRpc();
+
+        Debug.Log($"Monedas totales: {CoinsCollected.Value}");
     }
 
     void UpdateCoinUI()

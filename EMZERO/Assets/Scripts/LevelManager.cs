@@ -193,14 +193,16 @@ public class LevelManager : MonoBehaviour
     private void ChangeToZombie()
     {
         GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
-        ChangeToZombie(currentPlayer, true);
+        if (currentPlayer != null)
+        {
+            gm.NotifyPlayerTransformedServerRpc(true);
 
-        //Cambiar contadores
-        numberOfHumans--;
-        numberOfZombies++;
+            // Actualiza la UI 
+            numberOfHumans--;
+            numberOfZombies++;
+            UpdateTeamUI();
+        }
 
-        // Verificar condiciones de victoria cuando se tranforme un humano a zombie
-        CheckWinConditions();
     }
 
     public void ChangeToZombie(GameObject human, bool enabled)
@@ -270,11 +272,22 @@ public class LevelManager : MonoBehaviour
 
     private void ChangeToHuman()
     {
+        // Obtener la referencia al jugador actual
+        GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
+        
+        if (currentPlayer != null)
+        {
+            gm.NotifyPlayerTransformedServerRpc(false);
+            // Actualiza UI localmente
+            numberOfHumans++;
+            numberOfZombies--;
+            UpdateTeamUI();
+        }
+
+        gm.NotifyPlayerTransformedServerRpc(false);
         Debug.Log("Cambiando a Humano");
         return;
 
-        // Obtener la referencia al jugador actual
-        GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
 
         if (currentPlayer != null)
         {
@@ -363,54 +376,38 @@ public class LevelManager : MonoBehaviour
 
     private void HandleTimeLimitedGameMode()
     {
-        // Implementar la lógica para el modo de juego basado en tiempo
-        if (isGameOver) return;
+        if (gm.isGameOver.Value) return;
 
-        // Decrementar remainingSeconds basado en Time.deltaTime
-        remainingSeconds -= Time.deltaTime;
+        if (gameModeText != null)
+        {
+            // Mostrar tiempo restante
+            TimeSpan timeSpan = TimeSpan.FromSeconds(gm.remainingTime.Value);
+            gameModeText.text = $"{timeSpan.Minutes:00}:{timeSpan.Seconds:00}";
+        }
 
         // Comprobar si el tiempo ha llegado a cero
         if (remainingSeconds <= 0)
         {
             isGameOver = true;
             remainingSeconds = 0;
+            gm.EndGame("Los humanos han sobrevivido");
+
         }
-
-        // Convertir remainingSeconds a minutos y segundos
-        int minutesRemaining = Mathf.FloorToInt(remainingSeconds / 60);
-        int secondsRemaining = Mathf.FloorToInt(remainingSeconds % 60);
-
-        // Actualizar el texto de la interfaz de usuario
-        if (gameModeText != null)
-        {
-            gameModeText.text = $"{minutesRemaining:D2}:{secondsRemaining:D2}";
-        }
-
-        //Condición de victoria por sobrevivir
-        if (remainingSeconds <= 0)
-        {
-            remainingSeconds = 0;
-            isGameOver = true;
-            Debug.Log("¡Se acabó el tiempo, los Humanos han sobrevivido!");
-            GameOver("¡Se acabó el tiempo, los Humanos han sobrevivido!");
-        }
-
     }
-
     private void HandleCoinBasedGameMode()
     {
-        if (isGameOver) return;
+        if (gm.isGameOver.Value) return;
 
         // Implementar la lógica para el modo de juego basado en monedas
-        if (gameModeText != null && playerController != null)
+
+        if (gameModeText != null)
         {
-            gameModeText.text = $"{playerController.CoinsCollected}/{CoinsGenerated}";
-            if (playerController.CoinsCollected.Value == CoinsGenerated)
-            {
-                isGameOver = true;
-            }
+            // Mostrar contador de monedas
+            gameModeText.text = $"{gm.coinsCollected.Value}/{CoinsGenerated}";
         }
     }
+
+
 
     private void ShowGameOverPanel()
     {
@@ -435,45 +432,7 @@ public class LevelManager : MonoBehaviour
         SceneManager.LoadScene("MenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
     }
 
-    //Habrá que añadir que se lleve a la interfaz de fin de partida, pero de momento con un debug para comprobar que funciona
-    public void CheckWinConditions() 
-    {
-        if (isGameOver) return;
-
-        // Condición 1: Si no quedan humanos, los zombies ganan
-        if (numberOfHumans <= 0)
-        {
-            Debug.Log("¡Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
-            GameOver("¡Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
-            return;
-        }
-
-        // Condición 2: En modo monedas, si los humanos cogen todas las monedas ganan
-        if (gameMode == GameMode.Monedas && playerController != null &&
-            playerController.CoinsCollected.Value >= CoinsGenerated)
-        {
-            Debug.Log("¡Todas las monedas han sido recogidas. Los Humanos ganan!");
-            GameOver("¡Todas las monedas han sido recogidas. Los Humanos ganan!");
-            return;
-        }
-        
-        // Condición 3: Si no quedan zombies, los humanos ganan. Suponiendo los zombies se pueden ir de la partida sin que pete el juego
-        if (numberOfZombies <= 0)
-        {
-            Debug.Log("¡No quedan Zombies. Los Humanos ganan!");
-            GameOver("¡No quedan Zombies. Los Humanos ganan!");
-            return;
-        }
-        
-    }
-
-    private void GameOver(string message)
-    {
-        isGameOver = true;
-        ShowGameOverPanel(message);
-    }
-
-    private void ShowGameOverPanel(string message)
+    public void ShowGameOverPanel(string message)
     {
         if (gameOverPanel != null)
         {
@@ -495,7 +454,3 @@ public class LevelManager : MonoBehaviour
     #endregion
 
 }
-
-
-
-
