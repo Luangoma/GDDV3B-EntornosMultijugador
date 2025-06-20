@@ -22,11 +22,6 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private GameObject zombiePrefab;
 
     [Header("Team Settings")]
-    [Tooltip("Número de jugadores humanos")]
-    [SerializeField] private int numberOfHumans = 2;
-
-    [Tooltip("Número de zombis")]
-    [SerializeField] private int numberOfZombies = 2;
 
     [Header("Game Mode Settings")]
     [Tooltip("Selecciona el modo de juego")]
@@ -36,13 +31,6 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private int minutes = 5;
 
     private List<Vector3> SpawnPoints = new List<Vector3>();
-
-    // Referencias a los elementos de texto en el canvas
-    private TextMeshProUGUI humansText;
-    private TextMeshProUGUI zombiesText;
-    private TextMeshProUGUI gameModeText;
-
-    private int CoinsGenerated = 0;
 
     public string PlayerPrefabName => playerPrefab.name;
     public string ZombiePrefabName => zombiePrefab.name;
@@ -83,12 +71,12 @@ public class LevelManager : MonoBehaviour
         // Obtener la referencia al GameManager
         gm = GameManager.Instance;
 
-        Time.timeScale = 1f; // Asegurarse de que el tiempo no esté detenido
+        Time.timeScale = 1f; // Asegurarse de que el tiempo no estï¿½ detenido
         if (levelBuilder != null)
         {
             levelBuilder.Build(gm.densidad.Value);
             SpawnPoints = levelBuilder.GetSpawnPoints();
-            CoinsGenerated = levelBuilder.GetCoinsGenerated();
+            gm.SetTotalCoins(levelBuilder.GetCoinsGenerated());
         }
     }
 
@@ -133,7 +121,7 @@ public class LevelManager : MonoBehaviour
 
         remainingSeconds = minutes * 60;
 
-        // Obtener los puntos de aparición y el número de monedas generadas desde LevelBuilder
+        // Obtener los puntos de apariciï¿½n y el nï¿½mero de monedas generadas desde LevelBuilder
 
 
         //SpawnTeams();
@@ -145,18 +133,18 @@ public class LevelManager : MonoBehaviour
     {
         if (gameMode == GameMode.Tiempo)
         {
-            // Lógica para el modo de juego basado en tiempo
+            // Lï¿½gica para el modo de juego basado en tiempo
             HandleTimeLimitedGameMode();
         }
         else if (gameMode == GameMode.Monedas)
         {
-            // Lógica para el modo de juego basado en monedas
-            HandleCoinBasedGameMode();
+            // Lï¿½gica para el modo de juego basado en monedas
+            //HandleCoinBasedGameMode();
         }
 
         if (Input.GetKeyDown(KeyCode.Z)) // Presiona "Z" para convertirte en Zombie
         {
-            // Comprobar si el jugador actual está usando el prefab de humano
+            // Comprobar si el jugador actual estï¿½ usando el prefab de humano
             GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
             if (currentPlayer != null && currentPlayer.name.Contains(playerPrefab.name))
             {
@@ -169,7 +157,7 @@ public class LevelManager : MonoBehaviour
         }
         else if (Input.GetKeyDown(KeyCode.H)) // Presiona "H" para convertirte en Humano
         {
-            // Comprobar si el jugador actual está usando el prefab de zombie
+            // Comprobar si el jugador actual estï¿½ usando el prefab de zombie
             GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
             if (currentPlayer != null && currentPlayer.name.Contains(zombiePrefab.name))
             {
@@ -180,7 +168,7 @@ public class LevelManager : MonoBehaviour
                 Debug.Log("El jugador actual no es un zombie.");
             }
         }
-        UpdateTeamUI();
+        //UpdateTeamUI();
 
         if (isGameOver)
         {
@@ -200,8 +188,7 @@ public class LevelManager : MonoBehaviour
         ChangeToZombie(currentPlayer, true);
 
         //Cambiar contadores
-        numberOfHumans--;
-        numberOfZombies++;
+        GameManager.Instance.ConvertHuman();
 
         // Verificar condiciones de victoria cuando se tranforme un humano a zombie
         CheckWinConditions();
@@ -210,9 +197,9 @@ public class LevelManager : MonoBehaviour
     public void ChangeToZombie(GameObject human, bool enabled)
     {
         Debug.Log("Cambiando a Zombie");
-        if (human == null) { Debug.LogError("No se encontró el humano actual."); return; }
+        if (human == null) { Debug.LogError("No se encontrï¿½ el humano actual."); return; }
 
-        // Guardar la posición, rotación y uniqueID del humano actual
+        // Guardar la posiciï¿½n, rotaciï¿½n y uniqueID del humano actual
         Vector3 playerPosition = human.transform.position;
         Quaternion playerRotation = human.transform.rotation;
         string uniqueID = human.GetComponent<PlayerController>().uniqueID;
@@ -220,7 +207,7 @@ public class LevelManager : MonoBehaviour
         // Destruir el humano actual
         RequestDestroyServerRpc(human);
 
-        // Instanciar el prefab del zombie en la misma posición y rotación
+        // Instanciar el prefab del zombie en la misma posiciï¿½n y rotaciï¿½n
         GameObject zombie = Instantiate(zombiePrefab, playerPosition, playerRotation);
         if (enabled) { zombie.tag = "Player"; }
 
@@ -230,28 +217,58 @@ public class LevelManager : MonoBehaviour
 
         playerController.enabled = enabled;
         playerController.isZombie = true; // Cambiar el estado a zombie
-        playerController.uniqueID = uniqueID; // Mantener el identificador único
-        numberOfHumans--; // Reducir el número de humanos
-        numberOfZombies++; // Aumentar el número de zombis
+        playerController.uniqueID = uniqueID; // Mantener el identificador ï¿½nico
+        numberOfHumans--; // Reducir el nï¿½mero de humanos
+        numberOfZombies++; // Aumentar el nï¿½mero de zombis
         UpdateTeamUI();
 
         if (enabled)
         {
-            // Obtener la referencia a la cámara principal
+            // Obtener la referencia a la cï¿½mara principal
             Camera mainCamera = Camera.main;
 
-            if (mainCamera == null) { Debug.LogError("No se encontró la cámara principal."); return; }
+            if (mainCamera == null) { Debug.LogError("No se encontrï¿½ la cï¿½mara principal."); return; }
 
-            // Obtener el script CameraController de la cámara principal
+            // Obtener el script CameraController de la cï¿½mara principal
             CameraController cameraController = mainCamera.GetComponent<CameraController>();
 
             if (cameraController != null)
             {
                 // Asignar el zombie al script CameraController
                 cameraController.player = zombie.transform;
+                playerController.enabled = enabled;
+                playerController.isZombie = true; // Cambiar el estado a zombie
+                playerController.uniqueID = uniqueID; // Mantener el identificador ï¿½nico
+                GameManager.Instance.ConvertHuman();
+                //UpdateTeamUI();
+
+                if (enabled)
+                {
+                    // Obtener la referencia a la cï¿½mara principal
+                    Camera mainCamera = Camera.main;
+
+                    if (mainCamera != null)
+                    {
+                        // Obtener el script CameraController de la cï¿½mara principal
+                        CameraController cameraController = mainCamera.GetComponent<CameraController>();
+
+                        if (cameraController != null)
+                        {
+                            // Asignar el zombie al script CameraController
+                            cameraController.player = zombie.transform;
+                        }
+
+                        // Asignar el transform de la cï¿½mara al PlayerController
+                        playerController.cameraTransform = mainCamera.transform;
+                    }
+                    else
+                    {
+                        Debug.LogError("No se encontrï¿½ la cï¿½mara principal.");
+                    }
+                }
             }
 
-            // Asignar el transform de la cámara al PlayerController
+            // Asignar el transform de la cï¿½mara al PlayerController
             playerController.cameraTransform = mainCamera.transform;
         }
     }
@@ -266,23 +283,23 @@ public class LevelManager : MonoBehaviour
 
         if (currentPlayer != null)
         {
-            // Guardar la posición y rotación del jugador actual
+            // Guardar la posiciï¿½n y rotaciï¿½n del jugador actual
             Vector3 playerPosition = currentPlayer.transform.position;
             Quaternion playerRotation = currentPlayer.transform.rotation;
 
             // Destruir el jugador actual
             RequestDestroyServerRpc(currentPlayer);
 
-            // Instanciar el prefab del humano en la misma posición y rotación
+            // Instanciar el prefab del humano en la misma posiciï¿½n y rotaciï¿½n
             GameObject human = Instantiate(playerPrefab, playerPosition, playerRotation);
             human.tag = "Player";
 
-            // Obtener la referencia a la cámara principal
+            // Obtener la referencia a la cï¿½mara principal
             Camera mainCamera = Camera.main;
 
             if (mainCamera != null)
             {
-                // Obtener el script CameraController de la cámara principal
+                // Obtener el script CameraController de la cï¿½mara principal
                 CameraController cameraController = mainCamera.GetComponent<CameraController>();
 
                 if (cameraController != null)
@@ -293,14 +310,14 @@ public class LevelManager : MonoBehaviour
 
                 // Obtener el componente PlayerController del humano instanciado
                 playerController = human.GetComponent<PlayerController>();
-                // Asignar el transform de la cámara al PlayerController
+                // Asignar el transform de la cï¿½mara al PlayerController
                 if (playerController != null)
                 {
                     playerController.enabled = true;
                     playerController.cameraTransform = mainCamera.transform;
                     playerController.isZombie = false; // Cambiar el estado a humano
-                    numberOfHumans++; // Aumentar el número de humanos
-                    numberOfZombies--; // Reducir el número de zombis
+                    //numberOfHumans++; // Aumentar el nï¿½mero de humanos
+                    //numberOfZombies--; // Reducir el nï¿½mero de zombis
                 }
                 else
                 {
@@ -309,12 +326,12 @@ public class LevelManager : MonoBehaviour
             }
             else
             {
-                Debug.LogError("No se encontró la cámara principal.");
+                Debug.LogError("No se encontrï¿½ la cï¿½mara principal.");
             }
         }
         else
         {
-            Debug.LogError("No se encontró el jugador actual.");
+            Debug.LogError("No se encontrï¿½ el jugador actual.");
         }
     }
 
@@ -332,26 +349,13 @@ public class LevelManager : MonoBehaviour
         }
     }
 
-    private void UpdateTeamUI()
-    {
-        if (humansText != null)
-        {
-            humansText.text = $"{numberOfHumans}";
-        }
-
-        if (zombiesText != null)
-        {
-            zombiesText.text = $"{numberOfZombies}";
-        }
-    }
-
     #endregion
 
     #region Modo de juego
 
     private void HandleTimeLimitedGameMode()
     {
-        // Implementar la lógica para el modo de juego basado en tiempo
+        // Implementar la lï¿½gica para el modo de juego basado en tiempo
         if (isGameOver) return;
 
         // Decrementar remainingSeconds basado en Time.deltaTime
@@ -369,36 +373,36 @@ public class LevelManager : MonoBehaviour
         int secondsRemaining = Mathf.FloorToInt(remainingSeconds % 60);
 
         // Actualizar el texto de la interfaz de usuario
-        if (gameModeText != null)
-        {
-            gameModeText.text = $"{minutesRemaining:D2}:{secondsRemaining:D2}";
-        }
+        //if (gameModeText != null)
+        //{
+        //   gameModeText.text = $"{minutesRemaining:D2}:{secondsRemaining:D2}";
+        //}
 
-        //Condición de victoria por sobrevivir
+        //Condiciï¿½n de victoria por sobrevivir
         if (remainingSeconds <= 0)
         {
             remainingSeconds = 0;
             isGameOver = true;
-            Debug.Log("¡Se acabó el tiempo, los Humanos han sobrevivido!");
-            GameOver("¡Se acabó el tiempo, los Humanos han sobrevivido!");
+            Debug.Log("ï¿½Se acabï¿½ el tiempo, los Humanos han sobrevivido!");
+            GameOver("ï¿½Se acabï¿½ el tiempo, los Humanos han sobrevivido!");
         }
 
     }
 
-    private void HandleCoinBasedGameMode()
+    /*private void HandleCoinBasedGameMode()
     {
         if (isGameOver) return;
 
-        // Implementar la lógica para el modo de juego basado en monedas
+        // Implementar la lï¿½gica para el modo de juego basado en monedas
         if (gameModeText != null && playerController != null)
         {
-            gameModeText.text = $"{playerController.CoinsCollected}/{CoinsGenerated}";
-            if (playerController.CoinsCollected.Value == CoinsGenerated)
+            gameModeText.text = $"{gm.collectedCoins.Value}/{gm.totalCoins.Value}";
+            if (gm.collectedCoins.Value == gm.totalCoins.Value)
             {
                 isGameOver = true;
             }
         }
-    }
+    }*/
 
     private void ShowGameOverPanel()
     {
@@ -407,7 +411,7 @@ public class LevelManager : MonoBehaviour
             Time.timeScale = 0f;
             gameOverPanel.SetActive(true); // Muestra el panel de pausa
 
-            // Gestión del cursor
+            // Gestiï¿½n del cursor
             Cursor.lockState = CursorLockMode.None; // Desbloquea el cursor
             Cursor.visible = true; // Hace visible el cursor
         }
@@ -415,41 +419,41 @@ public class LevelManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        // Gestión del cursor
+        // Gestiï¿½n del cursor
         Cursor.lockState = CursorLockMode.Locked; // Bloquea el cursor
         Cursor.visible = false; // Oculta el cursor
 
-        // Cargar la escena del menú principal
+        // Cargar la escena del menï¿½ principal
         SceneManager.LoadScene("MenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
     }
 
-    //Habrá que añadir que se lleve a la interfaz de fin de partida, pero de momento con un debug para comprobar que funciona
+    //Habrï¿½ que aï¿½adir que se lleve a la interfaz de fin de partida, pero de momento con un debug para comprobar que funciona
     public void CheckWinConditions()
     {
         if (isGameOver) return;
 
-        // Condición 1: Si no quedan humanos, los zombies ganan
-        if (numberOfHumans <= 0)
+        // Condiciï¿½n 1: Si no quedan humanos, los zombies ganan
+        if (GameManager.Instance.humanNumber.Value <= 0)
         {
-            Debug.Log("¡Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
-            GameOver("¡Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
+            Debug.Log("ï¿½Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
+            GameOver("ï¿½Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
             return;
         }
 
-        // Condición 2: En modo monedas, si los humanos cogen todas las monedas ganan
+        // Condiciï¿½n 2: En modo monedas, si los humanos cogen todas las monedas ganan
         if (gameMode == GameMode.Monedas && playerController != null &&
-            playerController.CoinsCollected.Value >= CoinsGenerated)
+            gm.collectedCoins.Value >= gm.totalCoins.Value)
         {
-            Debug.Log("¡Todas las monedas han sido recogidas. Los Humanos ganan!");
-            GameOver("¡Todas las monedas han sido recogidas. Los Humanos ganan!");
+            Debug.Log("ï¿½Todas las monedas han sido recogidas. Los Humanos ganan!");
+            GameOver("ï¿½Todas las monedas han sido recogidas. Los Humanos ganan!");
             return;
         }
 
-        // Condición 3: Si no quedan zombies, los humanos ganan. Suponiendo los zombies se pueden ir de la partida sin que pete el juego
-        if (numberOfZombies <= 0)
+        // Condiciï¿½n 3: Si no quedan zombies, los humanos ganan. Suponiendo los zombies se pueden ir de la partida sin que pete el juego
+        if (GameManager.Instance.zombieNumber.Value <= 0)
         {
-            Debug.Log("¡No quedan Zombies. Los Humanos ganan!");
-            GameOver("¡No quedan Zombies. Los Humanos ganan!");
+            Debug.Log("ï¿½No quedan Zombies. Los Humanos ganan!");
+            GameOver("ï¿½No quedan Zombies. Los Humanos ganan!");
             return;
         }
 

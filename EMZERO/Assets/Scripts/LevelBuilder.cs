@@ -3,7 +3,7 @@ using System.Linq;
 using UnityEngine;
 
 /// <summary>
-/// Clase para generar el nivel del juego, incluyendo suelos, paredes, ítems decorativos, monedas y el borde exterior.
+/// Clase para generar el nivel del juego, incluyendo suelos, paredes, ï¿½tems decorativos, monedas y el borde exterior.
 /// </summary>
 public class LevelBuilder : MonoBehaviour
 {
@@ -13,7 +13,7 @@ public class LevelBuilder : MonoBehaviour
     [Tooltip("Array con los prefabs de suelo")]
     [SerializeField] private GameObject[] floorPrefabs;
 
-    [Tooltip("Array con los prefabs de ítems decorativos")]
+    [Tooltip("Array con los prefabs de ï¿½tems decorativos")]
     [SerializeField] private GameObject[] obstaclesPrefabs;
 
     [Tooltip("Prefab para las esquinas")]
@@ -35,7 +35,7 @@ public class LevelBuilder : MonoBehaviour
     [SerializeField] private GameObject coinPrefab;
 
     [Header("Room Settings")]
-    [Tooltip("Número total de salas")]
+    [Tooltip("Nï¿½mero total de salas")]
     [SerializeField] private int numberOfRooms = 4;
 
     [Tooltip("Ancho de cada sala")]
@@ -45,7 +45,7 @@ public class LevelBuilder : MonoBehaviour
     [SerializeField] private int roomLength = 5;
 
     [Tooltip("Densidad de elementos decorativos [%]")]
-    [SerializeField] private float ítemsDensity = 20f;
+    [SerializeField] private float ï¿½temsDensity = 20f;
 
     [Tooltip("Densidad de monedas [%]")]
     [SerializeField] private float coinsDensity = 20f;
@@ -73,11 +73,12 @@ public class LevelBuilder : MonoBehaviour
     public void Build(float valor)
     {
         coinsDensity = valor;
+        Random.InitState(GameManager.Instance.GetSeed());
         CreateRooms(roomWidth, roomLength, numberOfRooms);
     }
 
     /// <summary>
-    /// Crea una matriz de habitaciones y calcula los puntos de aparición.
+    /// Crea una matriz de habitaciones y calcula los puntos de apariciï¿½n.
     /// </summary>
     private void CreateRooms(int roomWidth, int roomLength, int numberOfRooms)
     {
@@ -88,8 +89,8 @@ public class LevelBuilder : MonoBehaviour
         {
             for (int j = 0; j < cols; j++)
             {
-                float x = j * roomWidth;  // Posición X
-                float z = i * roomLength; // Posición Z
+                float x = j * roomWidth;  // Posiciï¿½n X
+                float z = i * roomLength; // Posiciï¿½n Z
 
                 CreateRoom(roomWidth, roomLength, x, z);
 
@@ -103,7 +104,7 @@ public class LevelBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Crea una habitación con suelos y paredes.
+    /// Crea una habitaciï¿½n con suelos y paredes.
     /// </summary>
     private void CreateRoom(int width, int length, float offsetX, float offsetZ)
     {
@@ -113,9 +114,9 @@ public class LevelBuilder : MonoBehaviour
             return;
         }
 
-        Debug.Log($"Creando habitación en ({offsetX}, {offsetZ}) con dimensiones {width}x{length}...");
+        Debug.Log($"Creando habitaciï¿½n en ({offsetX}, {offsetZ}) con dimensiones {width}x{length}...");
         CreateFloor(width, length, offsetX, offsetZ);
-        Debug.Log($"Habitación generada en ({offsetX}, {offsetZ}).");
+        Debug.Log($"Habitaciï¿½n generada en ({offsetX}, {offsetZ}).");
 
         Debug.Log($"Creando paredes en ({offsetX}, {offsetZ}) con dimensiones {width}x{length}...");
         CreateWalls(width, length, offsetX, offsetZ);
@@ -123,7 +124,7 @@ public class LevelBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Crea una cuadrícula de baldosas para el suelo de una habitación.
+    /// Crea una cuadrï¿½cula de baldosas para el suelo de una habitaciï¿½n.
     /// </summary>
     private void CreateFloor(int width, int length, float offsetX, float offsetZ)
     {
@@ -147,7 +148,7 @@ public class LevelBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Coloca las esquinas, muros y puertas en los bordes de una habitación.
+    /// Coloca las esquinas, muros y puertas en los bordes de una habitaciï¿½n.
     /// </summary>
     private void CreateWalls(int width, int length, float offsetX, float offsetZ)
     {
@@ -201,7 +202,7 @@ public class LevelBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Instancia un prefab en una posición específica con una rotación específica.
+    /// Instancia un prefab en una posiciï¿½n especï¿½fica con una rotaciï¿½n especï¿½fica.
     /// </summary>
     private void PlaceElement(GameObject prefab, float x, float z, Quaternion rotation)
     {
@@ -233,7 +234,7 @@ public class LevelBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Coloca ítems decorativos en las baldosas del suelo.
+    /// Coloca ï¿½tems decorativos en las baldosas del suelo.
     /// </summary>
     private void CreateDecorativeItem(int x, int z, int width, int length, Vector3 tilePosition)
     {
@@ -271,12 +272,12 @@ public class LevelBuilder : MonoBehaviour
 
         if (totalCondition && ShouldPlaceCoin())
         {
-            float checkRadius = 0.5f; // Ajusta según el tamaño de los prefabs
+            float checkRadius = 0.5f; // Ajusta segï¿½n el tamaï¿½o de los prefabs
 
             Collider[] colliders = Physics.OverlapSphere(tilePosition, checkRadius);
             bool isPositionOccupied = colliders.Any(collider => collider.CompareTag("Obstacle"));
 
-            if (!isPositionOccupied) // Si no hay obstáculos, colocar la moneda
+            if (!isPositionOccupied) // Si no hay obstï¿½culos, colocar la moneda
             {
                 PlaceElement(coinPrefab, tilePosition.x, tilePosition.z, Quaternion.identity);
                 CoinsGenerated++;
@@ -285,12 +286,12 @@ public class LevelBuilder : MonoBehaviour
     }
 
     /// <summary>
-    /// Determina si se debe colocar un ítem decorativo basado en la densidad configurada.
+    /// Determina si se debe colocar un ï¿½tem decorativo basado en la densidad configurada.
     /// </summary>
     private bool ShouldPlaceItem()
     {
         float randomValue = Random.Range(0, 100);
-        return randomValue < ítemsDensity;
+        return randomValue < ï¿½temsDensity;
     }
 
     /// <summary>
@@ -307,18 +308,18 @@ public class LevelBuilder : MonoBehaviour
     #region Public methods
 
     /// <summary>
-    /// Obtiene la lista de puntos de aparición de humanos.
+    /// Obtiene la lista de puntos de apariciï¿½n de humanos.
     /// </summary>
-    /// <returns>Lista de puntos de aparición de humanos.</returns>
+    /// <returns>Lista de puntos de apariciï¿½n de humanos.</returns>
     public List<Vector3> GetSpawnPoints()
     {
         return SpawnPoints.ToList();
     }
 
     /// <summary>
-    /// Obtiene el número de monedas generadas.
+    /// Obtiene el nï¿½mero de monedas generadas.
     /// </summary>
-    /// <returns>Número de monedas generadas.</returns>
+    /// <returns>Nï¿½mero de monedas generadas.</returns>
     public int GetCoinsGenerated()
     {
         return CoinsGenerated;
