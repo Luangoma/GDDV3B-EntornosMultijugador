@@ -205,11 +205,12 @@ public class LevelManager : MonoBehaviour
 
     private void ChangeToZombie()
     {
+        return;
         GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
         ChangeToZombie(currentPlayer, true);
 
         //Cambiar contadores
-        gm.ConvertHuman();
+        //gm.ConvertHuman();
 
         // Verificar condiciones de victoria cuando se tranforme un humano a zombie
         CheckWinConditions();
@@ -217,6 +218,7 @@ public class LevelManager : MonoBehaviour
 
     public void ChangeToZombie(GameObject human, bool enabled)
     {
+        return;
         Debug.Log("Cambiando a Zombie");
         if (human == null) { Debug.LogError("No se encontr� el humano actual."); return; }
 
@@ -259,7 +261,7 @@ public class LevelManager : MonoBehaviour
                 playerController.enabled = enabled;
                 playerController.isZombie = true; // Cambiar el estado a zombie
                 playerController.uniqueID = uniqueID; // Mantener el identificador �nico
-                gm.ConvertHuman();
+                //gm.ConvertHuman();
                 UpdateTeamUI();
 
             }

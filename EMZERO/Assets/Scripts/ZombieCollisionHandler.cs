@@ -23,7 +23,7 @@ public class ZombieCollisionHandler : MonoBehaviour
 
     private void OnCollisionEnter(Collision collision)
     {
-
+        Debug.Log("Colision detectada con " + collision.gameObject.name);
         PlayerController otherPlayer = collision.gameObject.GetComponent<PlayerController>();
         if (otherPlayer != null && !otherPlayer.isZombie) GameManager.Instance.TryConvertServerRpc(otherPlayer.NetworkObjectId);
     }

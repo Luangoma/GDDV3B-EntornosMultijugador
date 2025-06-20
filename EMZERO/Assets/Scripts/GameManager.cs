@@ -227,10 +227,23 @@ public class GameManager : NetworkBehaviour
         totalCoins.Value = coins;
     }
 
-    public void ConvertHuman()
+    public void ConvertHuman(NetworkObject p)
     {
-        humanNumber.Value--;
+        if (!IsServer) return;
+        //humanNumber.Value--;      // Esto ya lo hace el propio humano en el despawn
+        // Destruir el humano
+        // Guardarme sus coordenadas y rotacion
+        Vector3 position = p.transform.position;
+        Quaternion rotation = p.transform.rotation;
+        ulong clientId = p.OwnerClientId;
+        p.Despawn();
+        // Crear el zombie
+        GameObject zombie = Instantiate(zombiePrefab, position, rotation);
+        zombie.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
+
+        // Añadir a la cuenta de zombies
         zombieNumber.Value++;
+
     }
 
     [ServerRpc(RequireOwnership = false)]
@@ -243,7 +256,7 @@ public class GameManager : NetworkBehaviour
             if (player != null && !player.isZombie)
             {
                 //Convertir el humano
-                ConvertHuman();
+                ConvertHuman(obj);
 
             }
 

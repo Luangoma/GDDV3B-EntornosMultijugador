@@ -34,7 +34,7 @@ public class PlayerController : NetworkBehaviour
     private NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
 
     GameManager gameManager;
-
+    GameObject camObj;
     #endregion
 
 
@@ -56,23 +56,40 @@ public class PlayerController : NetworkBehaviour
             //    }
             //}
             // Instancia una cámara solo para este jugador
-            if (playerCameraPrefab == null)
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
             {
-                Debug.LogWarning("playerCameraPrefab no asignado en PlayerController.");
-                return;
-            }
-            GameObject camObj = Instantiate(playerCameraPrefab);
-            Camera cam = camObj.GetComponent<Camera>();
-            cam.tag = "MainCamera"; // Opcional, si quieres usar Camera.main
-            cameraTransform = cam.transform;
+                cameraTransform = mainCam.transform;
+                camObj = mainCam.gameObject;
 
-            // Asigna el jugador al CameraController de esa cámara
-            CameraController cameraController = camObj.GetComponent<CameraController>();
-            if (cameraController != null)
-            {
-                Debug.Log("Cámara asignada al jugador local");
-                cameraController.player = this.transform;
+                // Asigna el jugador al CameraController de esa cámara
+                CameraController cameraController = camObj.GetComponent<CameraController>();
+                if (cameraController != null)
+                {
+                    Debug.Log("Cámara existente asignada al nuevo jugador local");
+                    cameraController.player = this.transform;
+                }
             }
+            else { 
+                if (playerCameraPrefab == null)
+                {
+                    Debug.LogWarning("playerCameraPrefab no asignado en PlayerController.");
+                    return;
+                }
+                camObj = Instantiate(playerCameraPrefab);
+                Camera cam = camObj.GetComponent<Camera>();
+                cam.tag = "MainCamera";
+                cameraTransform = cam.transform;
+
+                // Asigna el jugador al CameraController de esa cámara
+                CameraController cameraController = camObj.GetComponent<CameraController>();
+                if (cameraController != null)
+                {
+                    Debug.Log("Cámara asignada al jugador local");
+                    cameraController.player = this.transform;
+                }
+            }
+
 
         }
         else
