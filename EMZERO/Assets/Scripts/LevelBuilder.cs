@@ -45,7 +45,7 @@ public class LevelBuilder : MonoBehaviour
     [SerializeField] private int roomLength = 5;
 
     [Tooltip("Densidad de elementos decorativos [%]")]
-    [SerializeField] private float �temsDensity = 20f;
+    [SerializeField] private float itemsDensity = 20f;
 
     [Tooltip("Densidad de monedas [%]")]
     [SerializeField] private float coinsDensity = 20f;
@@ -291,7 +291,7 @@ public class LevelBuilder : MonoBehaviour
     private bool ShouldPlaceItem()
     {
         float randomValue = Random.Range(0, 100);
-        return randomValue < �temsDensity;
+        return randomValue < itemsDensity;
     }
 
     /// <summary>

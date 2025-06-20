@@ -32,6 +32,10 @@ public class LevelManager : MonoBehaviour
 
     private List<Vector3> SpawnPoints = new List<Vector3>();
 
+    private TextMeshProUGUI humansText;
+    private TextMeshProUGUI zombiesText;
+    private TextMeshProUGUI gameModeText;
+
     public string PlayerPrefabName => playerPrefab.name;
     public string ZombiePrefabName => zombiePrefab.name;
 
@@ -120,7 +124,8 @@ public class LevelManager : MonoBehaviour
         }
 
         remainingSeconds = minutes * 60;
-
+        gm.zombieNumber.OnValueChanged += OnPlayersChange;
+        gm.humanNumber.OnValueChanged += OnPlayersChange;
         // Obtener los puntos de aparici�n y el n�mero de monedas generadas desde LevelBuilder
 
 
@@ -129,6 +134,10 @@ public class LevelManager : MonoBehaviour
         UpdateTeamUI();
     }
 
+    private void OnPlayersChange(int a, int b)
+    {
+        UpdateTeamUI();
+    }
     private void Update()
     {
         if (gameMode == GameMode.Tiempo)
@@ -176,6 +185,18 @@ public class LevelManager : MonoBehaviour
         }
     }
 
+    private void UpdateTeamUI()
+    {
+        if (humansText != null)
+        {
+            humansText.text = $"{gm.humanNumber.Value}";
+        }
+
+        if (zombiesText != null)
+        {
+            zombiesText.text = $"{gm.zombieNumber.Value}";
+        }
+    }
     #endregion
 
     #region Team management methods
@@ -188,7 +209,7 @@ public class LevelManager : MonoBehaviour
         ChangeToZombie(currentPlayer, true);
 
         //Cambiar contadores
-        GameManager.Instance.ConvertHuman();
+        gm.ConvertHuman();
 
         // Verificar condiciones de victoria cuando se tranforme un humano a zombie
         CheckWinConditions();
@@ -218,8 +239,7 @@ public class LevelManager : MonoBehaviour
         playerController.enabled = enabled;
         playerController.isZombie = true; // Cambiar el estado a zombie
         playerController.uniqueID = uniqueID; // Mantener el identificador �nico
-        numberOfHumans--; // Reducir el n�mero de humanos
-        numberOfZombies++; // Aumentar el n�mero de zombis
+
         UpdateTeamUI();
 
         if (enabled)
@@ -239,37 +259,10 @@ public class LevelManager : MonoBehaviour
                 playerController.enabled = enabled;
                 playerController.isZombie = true; // Cambiar el estado a zombie
                 playerController.uniqueID = uniqueID; // Mantener el identificador �nico
-                GameManager.Instance.ConvertHuman();
-                //UpdateTeamUI();
+                gm.ConvertHuman();
+                UpdateTeamUI();
 
-                if (enabled)
-                {
-                    // Obtener la referencia a la c�mara principal
-                    Camera mainCamera = Camera.main;
-
-                    if (mainCamera != null)
-                    {
-                        // Obtener el script CameraController de la c�mara principal
-                        CameraController cameraController = mainCamera.GetComponent<CameraController>();
-
-                        if (cameraController != null)
-                        {
-                            // Asignar el zombie al script CameraController
-                            cameraController.player = zombie.transform;
-                        }
-
-                        // Asignar el transform de la c�mara al PlayerController
-                        playerController.cameraTransform = mainCamera.transform;
-                    }
-                    else
-                    {
-                        Debug.LogError("No se encontr� la c�mara principal.");
-                    }
-                }
             }
-
-            // Asignar el transform de la c�mara al PlayerController
-            playerController.cameraTransform = mainCamera.transform;
         }
     }
 
@@ -433,7 +426,7 @@ public class LevelManager : MonoBehaviour
         if (isGameOver) return;
 
         // Condici�n 1: Si no quedan humanos, los zombies ganan
-        if (GameManager.Instance.humanNumber.Value <= 0)
+        if (gm.humanNumber.Value <= 0)
         {
             Debug.Log("�Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
             GameOver("�Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
@@ -450,7 +443,7 @@ public class LevelManager : MonoBehaviour
         }
 
         // Condici�n 3: Si no quedan zombies, los humanos ganan. Suponiendo los zombies se pueden ir de la partida sin que pete el juego
-        if (GameManager.Instance.zombieNumber.Value <= 0)
+        if (gm.zombieNumber.Value <= 0)
         {
             Debug.Log("�No quedan Zombies. Los Humanos ganan!");
             GameOver("�No quedan Zombies. Los Humanos ganan!");

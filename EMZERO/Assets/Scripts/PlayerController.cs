@@ -27,6 +27,8 @@ public class PlayerController : NetworkBehaviour
     private float horizontalInput;         // Entrada horizontal (A/D o flechas)
     private float verticalInput;           // Entrada vertical (W/S o flechas)
 
+    private TextMeshProUGUI coinText;
+
     #region Variables compartidas/game manager
     private NetworkVariable<Quaternion> Rotation = new NetworkVariable<Quaternion>();
     private NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
@@ -35,12 +37,6 @@ public class PlayerController : NetworkBehaviour
 
     #endregion
 
-    #region UIs
-    private TextMeshProUGUI coinText;
-    private TextMeshProUGUI humansText;
-    private TextMeshProUGUI zombiesText;
-    private TextMeshProUGUI gameModeText;
-    #endregion
 
 
 
@@ -86,19 +82,12 @@ public class PlayerController : NetworkBehaviour
         }
 
         gameManager.collectedCoins.OnValueChanged += OnCoinsIncreased;
-        gameManager.zombieNumber.OnValueChanged += OnTeamChange;
-        gameManager.humanNumber.OnValueChanged += OnTeamChange;
     }
 
     // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
     private void OnCoinsIncreased(int previousValue, int newValue)
     {
         UpdateCoinUI();
-    }
-
-    private void OnTeamChange(int previousValue, int newValue)
-    {
-        UpdateTeamUI();
     }
 
     // Este metodo se dispara para cada cliente en el momento de que la networkVariable Position cambie
@@ -160,32 +149,14 @@ public class PlayerController : NetworkBehaviour
             {
                 // Buscar el TextMeshProUGUI llamado "CoinsValue" dentro del Panel
                 Transform coinTextTransform = panel.Find("CoinsValue");
-                Transform humansTextTransform = panel.Find("HumansValue");
-                Transform zombiesTextTransform = panel.Find("ZombiesValue");
-                Transform gameModeTextTransform = panel.Find("GameModeConditionValue");
 
                 if (coinTextTransform != null)
                 {
                     coinText = coinTextTransform.GetComponent<TextMeshProUGUI>();
                 }
 
-                if (humansTextTransform != null)
-                {
-                    humansText = humansTextTransform.GetComponent<TextMeshProUGUI>();
-                }
-
-                if (zombiesTextTransform != null)
-                {
-                    zombiesText = zombiesTextTransform.GetComponent<TextMeshProUGUI>();
-                }
-
-                if (gameModeTextTransform != null)
-                {
-                    gameModeText = gameModeTextTransform.GetComponent<TextMeshProUGUI>();
-                }
             }
             UpdateCoinUI();
-            UpdateTeamUI();
         }
     }
     void Update()
@@ -265,18 +236,6 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    private void UpdateTeamUI()
-    {
-        if (humansText != null)
-        {
-            humansText.text = $"{GameManager.Instance.humanNumber.Value}";
-        }
-
-        if (zombiesText != null)
-        {
-            zombiesText.text = $"{GameManager.Instance.zombieNumber.Value}";
-        }
-    }
 
     // Actualizar del movimiento del personaje al servidor en tiempo real
     [ServerRpc]
