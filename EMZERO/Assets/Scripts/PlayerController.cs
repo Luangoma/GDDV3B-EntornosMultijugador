@@ -208,7 +208,13 @@ public class PlayerController : NetworkBehaviour
     {
         Rotation.OnValueChanged -= OnRotationChanged;
         Position.OnValueChanged -= OnPositionChanged;
-
+        if (isZombie)
+        {
+            gameManager.zombieNumber.Value--;
+        }
+        else { 
+            gameManager.humanNumber.Value--;
+        }
     }
 
 
