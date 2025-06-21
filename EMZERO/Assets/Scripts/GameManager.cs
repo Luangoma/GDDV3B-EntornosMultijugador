@@ -73,7 +73,7 @@ public class GameManager : NetworkBehaviour
             Destroy(this); // Esto evita m�ltiples instancias
         }
     }
-    void Start()
+    public void Start()
     {
         Instance.densidad.Value = 5f;
         Instance.tiempo.Value = 5;

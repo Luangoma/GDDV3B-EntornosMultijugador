@@ -43,16 +43,14 @@ public class MenuManager : MonoBehaviour
     {
         gm = GameManager.Instance;
         nm = NetworkManager.Singleton;
-        for (var i = 0; i < buttons.Count; i++)
+        foreach (var item in pantallas) { item.gameObject.SetActive(false); }
+        for (int i = 0; i < buttons.Count; i++)
         {
-            int pantalla = screens[screenSelect[i]];
-            buttons[i].onClick.AddListener(delegate { CambiarEscenaAdelante(); CambioPantalla(pantalla); });
+            int pantallaIndex = screens[screenSelect[i]]; // Es necesario guardar en variable
+            buttons[i].onClick.AddListener(delegate { CambiarEscenaAdelante(); CambioPantalla(pantallaIndex); });
         }
-        foreach (var item in atrasButtons)
-        {
-            item.onClick.AddListener(delegate { CambiarEscenaAtras(); });
-        }
-
+        foreach (var item in atrasButtons) { item.onClick.AddListener(delegate { CambiarEscenaAtras(); }); }
+        actual.gameObject.SetActive(true);
     }
     #endregion  
     #region Navegacion entre pantallas

@@ -11,6 +11,9 @@ public class SliderValueText : MonoBehaviour
     public void Awake()
     {
         textField.SetText("5");
+    }
+    public void Start()
+    {
         slider.value = GameManager.Instance.tiempo.Value;
     }
     public void HandleSliderValueOnChangeBy5(float value)
