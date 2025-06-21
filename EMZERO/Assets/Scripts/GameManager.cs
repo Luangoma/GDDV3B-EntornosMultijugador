@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
+//using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -12,7 +13,7 @@ public class GameManager : NetworkBehaviour
 
     [SerializeField] private GameObject humanPrefab;
     [SerializeField] private GameObject zombiePrefab;
-
+    public NetworkVariable<bool> isGameOver = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
 
     // Centros de las habitaciones - las saca del level builder
@@ -83,12 +84,12 @@ public class GameManager : NetworkBehaviour
             nm.OnClientDisconnectCallback += HandleClientDisconnected;
             mapSeed.Value = UnityEngine.Random.Range(MINSEED, MAXSEED);
         }
-        // A�adir el host a readyStates
+        // A adir el host a readyStates
         ulong hostId = nm.LocalClientId;
         if (!readyStates.ContainsKey(hostId))
         {
             readyStates[hostId] = false;
-            Debug.Log($"Host (clientId {hostId}) a�adido a readyStates.");
+            Debug.Log($"Host (clientId {hostId}) a adido a readyStates.");
         }
     }
     public override void OnDestroy()
@@ -259,9 +260,109 @@ public class GameManager : NetworkBehaviour
                 ConvertHuman(obj);
 
             }
+        }
+    }
+    [ServerRpc]
+    public void NotifyCoinCollectedServerRpc()
+    {
+        collectedCoins.Value++;
+        Debug.Log($"Monedas totales (global): {collectedCoins.Value}");
 
+        // Verificar condici n de victoria
+        CheckWinConditionsServerRpc();
+    }
+
+
+    [ClientRpc]
+    private void UpdateCoinsClientRpc(int newCount)
+    {
+        // Sincronizar el conteo en todos los jugadores
+        foreach (var player in FindObjectsOfType<PlayerController>())
+        {
+            player.UpdateCoinUI(newCount);
         }
     }
 
-}
+    [ServerRpc]
+    public void NotifyPlayerTransformedServerRpc(bool becameZombie)
+    {
+        Debug.Log("NotifyPlayerTransformedServerRpc llamado");
 
+
+        if (becameZombie)
+        {
+            humanNumber.Value--;
+            zombieNumber.Value++;
+            Debug.Log($"Se transform  en zombie. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
+        }
+        else
+        {
+            humanNumber.Value++;
+            zombieNumber.Value--;
+            Debug.Log($"Se transform  en humano. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
+        }
+
+        CheckWinConditionsServerRpc();
+    }
+
+
+
+    [ServerRpc]
+    private void CheckWinConditionsServerRpc()
+    {
+        Debug.Log($"DENTRO DE LAS WC- Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
+
+
+        // Zombies ganan si no quedan humanos
+        if (humanNumber.Value <= 0)
+        {
+            EndGame(" Los Zombies ganan!");
+            Debug.Log("Zombies ganan");
+
+            return;
+        }
+
+        // Verificar condiciones seg n el modo de juego
+        if (modo.Value == GameMode.Monedas)
+        {
+            int totalCoins = FindObjectOfType<LevelBuilder>().GetCoinsGenerated();
+            if (collectedCoins.Value >= totalCoins)
+                if (modo.Value == GameMode.Monedas)
+                {
+                    LevelBuilder levelBuilder = FindObjectOfType<LevelBuilder>();
+                    if (levelBuilder == null)
+                    {
+                        Debug.LogError("LevelBuilder no encontrado!");
+                        return;
+                    }
+
+                    totalCoins = levelBuilder.GetCoinsGenerated();
+                    Debug.Log($"Verificando monedas: {collectedCoins.Value}/{totalCoins} (Modo: {modo.Value})");
+
+                    if (collectedCoins.Value >= totalCoins && totalCoins > 0)
+                    {
+                        Debug.Log(" Condici n de victoria cumplida! Humanos ganan");
+                        EndGame(" Los Humanos ganan! Han recogido todas las monedas");
+                        return;
+                    }
+                }
+        }
+        else if (modo.Value == GameMode.Tiempo)
+        {
+            // La condici n de tiempo se maneja en Update
+        }
+    }
+
+    [ClientRpc]
+    private void EndGameClientRpc(string message)
+    {
+        FindObjectOfType<LevelManager>().ShowGameOverPanel(message);
+    }
+
+    public void EndGame(string message)
+    {
+        isGameOver.Value = true;
+        EndGameClientRpc(message);
+    }
+
+}

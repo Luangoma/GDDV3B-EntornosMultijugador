@@ -15,14 +15,14 @@ public class PlayerController : NetworkBehaviour
     [Header("Stats")]
 
     [Header("Character settings")]
-    public bool isZombie = false; // Añadir una propiedad para el estado del jugador
-    public string uniqueID; // Añadir una propiedad para el identificador único
+    public bool isZombie = false; // A adir una propiedad para el estado del jugador
+    public string uniqueID; // A adir una propiedad para el identificador  nico
 
     [Header("Movement Settings")]
     public float moveSpeed = 5f;           // Velocidad de movimiento
     public float zombieSpeedModifier = 0.8f; // Modificador de velocidad para zombies
     public Animator animator;                   // Referencia al Animator
-    public Transform cameraTransform;      // Referencia a la cámara
+    public Transform cameraTransform;      // Referencia a la c mara
 
     private float horizontalInput;         // Entrada horizontal (A/D o flechas)
     private float verticalInput;           // Entrada vertical (W/S o flechas)
@@ -45,7 +45,7 @@ public class PlayerController : NetworkBehaviour
         gameManager = GameManager.Instance;
         if (IsOwner)
         {
-            // Asigna la cámara principal a este jugador local
+            // Asigna la c mara principal a este jugador local
             //Camera mainCamera = Camera.main;
             //if (mainCamera != null)
             //{
@@ -55,22 +55,23 @@ public class PlayerController : NetworkBehaviour
             //        cameraController.player = this.transform;
             //    }
             //}
-            // Instancia una cámara solo para este jugador
+            // Instancia una c mara solo para este jugador
             Camera mainCam = Camera.main;
             if (mainCam != null)
             {
                 cameraTransform = mainCam.transform;
                 camObj = mainCam.gameObject;
 
-                // Asigna el jugador al CameraController de esa cámara
+                // Asigna el jugador al CameraController de esa c mara
                 CameraController cameraController = camObj.GetComponent<CameraController>();
                 if (cameraController != null)
                 {
-                    Debug.Log("Cámara existente asignada al nuevo jugador local");
+                    Debug.Log("C mara existente asignada al nuevo jugador local");
                     cameraController.player = this.transform;
                 }
             }
-            else { 
+            else
+            {
                 if (playerCameraPrefab == null)
                 {
                     Debug.LogWarning("playerCameraPrefab no asignado en PlayerController.");
@@ -81,11 +82,11 @@ public class PlayerController : NetworkBehaviour
                 cam.tag = "MainCamera";
                 cameraTransform = cam.transform;
 
-                // Asigna el jugador al CameraController de esa cámara
+                // Asigna el jugador al CameraController de esa c mara
                 CameraController cameraController = camObj.GetComponent<CameraController>();
                 if (cameraController != null)
                 {
-                    Debug.Log("Cámara asignada al jugador local");
+                    Debug.Log("C mara asignada al jugador local");
                     cameraController.player = this.transform;
                 }
             }
@@ -104,7 +105,7 @@ public class PlayerController : NetworkBehaviour
     // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
     private void OnCoinsIncreased(int previousValue, int newValue)
     {
-        UpdateCoinUI();
+        UpdateCoinUI(newValue);
     }
 
     // Este metodo se dispara para cada cliente en el momento de que la networkVariable Position cambie
@@ -200,7 +201,7 @@ public class PlayerController : NetworkBehaviour
         //Debug.Log("1");
         if (cameraTransform == null) { return; }
         //Debug.Log("2");
-        // Calcular la dirección de movimiento en relación a la cámara
+        // Calcular la direcci n de movimiento en relaci n a la c mara
         Vector3 moveDirection = (cameraTransform.forward * verticalInput + cameraTransform.right * horizontalInput).normalized;
         moveDirection.y = 0f; // Asegurarnos de que el movimiento es horizontal (sin componente Y)
 
@@ -209,14 +210,14 @@ public class PlayerController : NetworkBehaviour
         {
             //Debug.Log("Puedo controlar a este jugador !!!!!!");
 
-            // Calcular la rotación en Y basada en la dirección del movimiento
+            // Calcular la rotaci n en Y basada en la direcci n del movimiento
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
             SubmitRotationServerRpc(targetRotation);
 
             // Ajustar la velocidad si es zombie
             float adjustedSpeed = isZombie ? moveSpeed * zombieSpeedModifier : moveSpeed;
 
-            // Mover al jugador en la dirección deseada
+            // Mover al jugador en la direcci n deseada
             //transform.Translate(moveDirection * adjustedSpeed * Time.deltaTime, Space.World);
             SubmitMovementServerRpc(moveDirection * adjustedSpeed * Time.deltaTime);
         }
@@ -229,7 +230,8 @@ public class PlayerController : NetworkBehaviour
         {
             gameManager.zombieNumber.Value--;
         }
-        else { 
+        else
+        {
             gameManager.humanNumber.Value--;
         }
     }
@@ -237,7 +239,7 @@ public class PlayerController : NetworkBehaviour
 
     void HandleAnimations()
     {
-        // Animaciones basadas en la dirección del movimiento
+        // Animaciones basadas en la direcci n del movimiento
         animator.SetFloat("Speed", Mathf.Abs(horizontalInput) + Mathf.Abs(verticalInput));  // Controla el movimiento (caminar/correr)
     }
 
@@ -247,7 +249,7 @@ public class PlayerController : NetworkBehaviour
         if (!isZombie) // Solo los humanos pueden recoger monedas
         {
             gameManager.collectedCoins.Value++;
-            UpdateCoinUI();
+            UpdateCoinUI(gameManager.collectedCoins.Value);
         }
     }
 
@@ -257,6 +259,35 @@ public class PlayerController : NetworkBehaviour
         {
             coinText.text = $"{gameManager.collectedCoins.Value}";
         }
+    }
+
+    [ServerRpc]
+    private void RequestCoinCollectionServerRpc()
+    {
+        // Solo el servidor puede modificar este valor
+        gameManager.collectedCoins.Value++;
+        Debug.Log($"Monedas recolectadas (local): {gameManager.collectedCoins.Value++}");
+
+        // Notificar al GameManager
+        GameManager.Instance?.NotifyCoinCollectedServerRpc();
+
+
+    }
+
+    public void UpdateCoinUI(int coinCount)
+    {
+        if (coinText != null)
+        {
+            coinText.text = $"{coinCount}";
+        }
+    }
+
+    [ServerRpc]
+    public void coinCollectedServerRpc() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
+    {
+
+        //UpdateCoinOnlineClientRpc(CoinsCollected.Value);
+        UpdateCoinUI();
     }
 
 

@@ -41,7 +41,7 @@ public class MenuManager : MonoBehaviour
     #region NetworkBehaviour
     public void Awake()
     {
-        Time.timeScale = 1f; // Asegúrate de que el tiempo está restaurado al cargar la escena
+        Time.timeScale = 1f; // Aseg rate de que el tiempo est  restaurado al cargar la escena
         actual = pantallas[screens[0]];
     }
     public void Start()
