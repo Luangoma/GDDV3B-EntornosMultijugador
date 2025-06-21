@@ -79,8 +79,9 @@ public class PlayerController : NetworkBehaviour
     // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
     private void OnCoinsIncreased(int previousValue, int newValue)
     {
-        CoinsCollected.Value = newValue;
-        UpdateCoinUI();
+        // Esta callback se ejecutará cuando el servidor actualice el valor
+        Debug.Log($"Sincronizando monedas: {previousValue} -> {newValue}");
+        UpdateCoinUI(newValue);
     }
 
     // Este metodo se dispara para cada cliente en el momento de que la networkVariable Position cambie
@@ -220,21 +221,30 @@ public class PlayerController : NetworkBehaviour
         {
             Debug.Log($"Moneda recolectada por humano. Actual: {CoinsCollected.Value}");
             RequestCoinCollectionServerRpc();
+
+            // Actualización optimista local (opcional, para mejor feedback visual)
+            UpdateCoinUI(CoinsCollected.Value + 1);
         }
     }
 
     [ServerRpc]
     private void RequestCoinCollectionServerRpc()
     {
-        // Incrementar las monedas del jugador
+        // Solo el servidor puede modificar este valor
         CoinsCollected.Value++;
+        Debug.Log($"Monedas recolectadas (local): {CoinsCollected.Value}");
 
         // Notificar al GameManager
-        GameManager.Instance.NotifyCoinCollectedServerRpc();
-
-        Debug.Log($"Monedas totales: {CoinsCollected.Value}");
+        GameManager.Instance?.NotifyCoinCollectedServerRpc();
     }
 
+    public void UpdateCoinUI(int coinCount)
+    {
+        if (coinText != null)
+        {
+            coinText.text = $"{coinCount}";
+        }
+    }
     void UpdateCoinUI()
     {
         if (coinText != null)
@@ -247,7 +257,6 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc]
     public void coinCollectedServerRpc() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
     {
-        CoinsCollected.Value++;
         //UpdateCoinOnlineClientRpc(CoinsCollected.Value);
         UpdateCoinUI();
     }
@@ -297,6 +306,9 @@ public class PlayerController : NetworkBehaviour
         transform.position = randomPosition;
         //Position.Value = randomPosition;
     }
+
+
+
 
 }
 

@@ -73,6 +73,7 @@ public class LevelBuilder : MonoBehaviour
     public void Build()
     {
         CreateRooms(roomWidth, roomLength, numberOfRooms);
+
     }
 
     /// <summary>
@@ -320,6 +321,7 @@ public class LevelBuilder : MonoBehaviour
     /// <returns>Número de monedas generadas.</returns>
     public int GetCoinsGenerated()
     {
+        Debug.Log($"Total de monedas generadas: {CoinsGenerated}");
         return CoinsGenerated;
     }
 

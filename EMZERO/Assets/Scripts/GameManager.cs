@@ -51,6 +51,8 @@ public class GameManager : NetworkBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        Debug.Log($"Modo de juego inicializado: {currentGameMode.Value}");
+
         nm = NetworkManager.Singleton;
         if (IsServer)
         {
@@ -157,6 +159,13 @@ public class GameManager : NetworkBehaviour
         {
             CreateTeams();
             CreateSpawnPoints();
+
+            LevelBuilder levelBuilder = FindObjectOfType<LevelBuilder>();
+            if (levelBuilder != null)
+            {
+                Debug.Log($"Total de monedas generadas: {levelBuilder.GetCoinsGenerated()}");
+            }
+
             // Aquí el servidor puede spawnear a todos los jugadores
             int aux = 0;
             GameObject prefab = humanPrefab;
@@ -201,6 +210,9 @@ public class GameManager : NetworkBehaviour
         int players = nm.ConnectedClientsList.Count;
         humanNumber = (players % 2 == 0) ? players / 2 : (players / 2) + 1;
         zombieNumber = players / 2;
+
+        humansAlive.Value = humanNumber;
+        zombiesAlive.Value = zombieNumber;
     }
 
     private void CreateSpawnPoints()
@@ -212,65 +224,87 @@ public class GameManager : NetworkBehaviour
     [ServerRpc]
     public void NotifyCoinCollectedServerRpc()
     {
-        if (isGameOver.Value) return;
 
         coinsCollected.Value++;
-        Debug.Log($"Monedas recolectadas: {coinsCollected.Value}/{FindObjectOfType<LevelBuilder>().GetCoinsGenerated()}");
+        Debug.Log($"Monedas totales (global): {coinsCollected.Value}");
 
-        if (currentGameMode.Value == GameMode.Monedas)
+        // Verificar condición de victoria
+        CheckWinConditionsServerRpc();
+    }
+
+    [ClientRpc]
+    private void UpdateCoinsClientRpc(int newCount)
+    {
+        // Sincronizar el conteo en todos los jugadores
+        foreach (var player in FindObjectsOfType<PlayerController>())
         {
-            int totalCoins = FindObjectOfType<LevelBuilder>().GetCoinsGenerated();
-            if (coinsCollected.Value >= totalCoins)
-            {
-                Debug.Log("¡Los humanos han recogido todas las monedas!");
-                EndGame("¡Los Humanos ganan! Han recogido todas las monedas");
-            }
+            player.CoinsCollected.Value = newCount;
+            player.UpdateCoinUI(newCount);
         }
     }
 
     [ServerRpc]
     public void NotifyPlayerTransformedServerRpc(bool becameZombie)
     {
-        if (isGameOver.Value) return;
+        Debug.Log("NotifyPlayerTransformedServerRpc llamado");
+
 
         if (becameZombie)
         {
             humansAlive.Value--;
             zombiesAlive.Value++;
+            Debug.Log($"Se transformó en zombie. Humanos: {humansAlive.Value}, Zombies: {zombiesAlive.Value}");
         }
         else
         {
             humansAlive.Value++;
             zombiesAlive.Value--;
+            Debug.Log($"Se transformó en humano. Humanos: {humansAlive.Value}, Zombies: {zombiesAlive.Value}");
         }
+
         CheckWinConditionsServerRpc();
     }
+
 
     [ServerRpc]
     private void CheckWinConditionsServerRpc()
     {
-        if (isGameOver.Value) return;
+        Debug.Log($"DENTRO DE LAS WC- Humanos: {humansAlive.Value}, Zombies: {zombiesAlive.Value}");
+
+        //if (isGameOver.Value) return;
 
         // Zombies ganan si no quedan humanos
         if (humansAlive.Value <= 0)
         {
             EndGame("¡Los Zombies ganan!");
+            Debug.Log("Zombies ganan");
+
             return;
         }
 
         // Verificar condiciones según el modo de juego
-        if (currentGameMode.Value == GameMode.Monedas)
-        {
-            int totalCoins = FindObjectOfType<LevelBuilder>().GetCoinsGenerated();
-            if (coinsCollected.Value >= totalCoins)
+        //if (currentGameMode.Value == GameMode.Monedas)
+        //{
+            LevelBuilder levelBuilder = FindObjectOfType<LevelBuilder>();
+            if (levelBuilder == null)
             {
+                Debug.LogError("LevelBuilder no encontrado!");
+                return;
+            }
+
+            int totalCoins = levelBuilder.GetCoinsGenerated();
+            Debug.Log($"Verificando monedas: {coinsCollected.Value}/{totalCoins} (Modo: {currentGameMode.Value})");
+
+            if (coinsCollected.Value >= totalCoins && totalCoins > 0)
+            {
+                Debug.Log("¡Condición de victoria cumplida! Humanos ganan");
                 EndGame("¡Los Humanos ganan! Han recogido todas las monedas");
                 return;
             }
-        }
+        //}
         else if (currentGameMode.Value == GameMode.Tiempo)
         {
-            // La condición de tiempo se maneja en LevelManager
+            // La condición de tiempo se maneja en Update
         }
     }
 
@@ -286,4 +320,3 @@ public class GameManager : NetworkBehaviour
         EndGameClientRpc(message);
     }
 }
-

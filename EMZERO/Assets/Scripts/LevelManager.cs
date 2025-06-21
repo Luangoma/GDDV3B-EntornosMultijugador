@@ -89,6 +89,8 @@ public class LevelManager : MonoBehaviour
             levelBuilder.Build();
             SpawnPoints = levelBuilder.GetSpawnPoints();
             CoinsGenerated = levelBuilder.GetCoinsGenerated();
+            Debug.Log($"Monedas disponibles: {CoinsGenerated}");
+
         }
     }
 
