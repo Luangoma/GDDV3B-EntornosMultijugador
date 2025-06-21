@@ -78,7 +78,7 @@ public class LevelManager : MonoBehaviour
         Time.timeScale = 1f; // Asegurarse de que el tiempo no est� detenido
         if (levelBuilder != null)
         {
-            levelBuilder.Build(gm.densidad.Value);
+            levelBuilder.Build(gm.densidad.Value,gm.GetSeed());
             SpawnPoints = levelBuilder.GetSpawnPoints();
             gm.SetTotalCoins(levelBuilder.GetCoinsGenerated());
         }
@@ -86,7 +86,6 @@ public class LevelManager : MonoBehaviour
 
     private void Start()
     {
-        gm = GameManager.Instance;
         minutes = gm.tiempo.Value;
         gameMode = gm.modo.Value;
 

@@ -15,6 +15,7 @@ public class changeModeMenuText : MonoBehaviour
     {
         gm = GameManager.Instance;
         str.SetText(gm.modo.Value.ToString());
+        changeMode();
     }
 
     // Update is called once per frame

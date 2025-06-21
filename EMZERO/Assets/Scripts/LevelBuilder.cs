@@ -70,10 +70,10 @@ public class LevelBuilder : MonoBehaviour
 
     #region World building methods
 
-    public void Build(float valor)
+    public void Build(float valor, int seed)
     {
         coinsDensity = valor;
-        Random.InitState(GameManager.Instance.GetSeed());
+        Random.InitState(seed);
         CreateRooms(roomWidth, roomLength, numberOfRooms);
     }
 

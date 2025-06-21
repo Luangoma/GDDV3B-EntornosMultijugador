@@ -7,34 +7,22 @@ using UnityEngine.SceneManagement;
 
 public class GameManager : NetworkBehaviour
 {
-    const int MINSEED = 0;
-    const int MAXSEED = 25000;
-
     [SerializeField] private GameObject humanPrefab;
     [SerializeField] private GameObject zombiePrefab;
 
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
+    private bool canJoin = true;
 
-    // Centros de las habitaciones - las saca del level builder
-    private List<Vector3> spawnPoints;
-
-    public static GameManager Instance { get; private set; }
-    public NetworkVariable<GameMode> modo = new NetworkVariable<GameMode>(GameMode.Monedas, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    public NetworkVariable<NetString> codigo = new NetworkVariable<NetString>(new NetString() { Value = "" }, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    public NetworkVariable<int> tiempo = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    public NetworkVariable<float> densidad = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    const int MINSEED = 0;
+    const int MAXSEED = 25000;
+    private List<Vector3> spawnPoints; // Centros de las habitaciones - las saca del level builder
     private NetworkManager nm;
-
+    #region Statics
+    public static GameManager Instance { get; private set; }
+    static NetworkVariableReadPermission rpEveryone = NetworkVariableReadPermission.Everyone;
+    static NetworkVariableWritePermission wpServer = NetworkVariableWritePermission.Server;
+    #endregion
     #region Variables compartidas
-
-    public NetworkVariable<int> humanNumber = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
-    public NetworkVariable<int> zombieNumber = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
-
-    public NetworkVariable<int> totalCoins = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
-    public NetworkVariable<int> collectedCoins = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
-    public NetworkVariable<float> timeRemaining = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
-    public NetworkVariable<int> mapSeed = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
-
     public struct NetString : INetworkSerializable, IEquatable<NetString>
     {
         public string Value;
@@ -58,7 +46,19 @@ public class GameManager : NetworkBehaviour
             }
         }
     }
-
+    // Menu
+    public NetworkVariable<GameMode> modo = new NetworkVariable<GameMode>(GameMode.Monedas, rpEveryone, wpServer);
+    public NetworkVariable<NetString> codigo = new NetworkVariable<NetString>(new NetString() { Value = "" }, rpEveryone, wpServer);
+    public NetworkVariable<int> tiempo = new NetworkVariable<int>(0, rpEveryone, wpServer);
+    public NetworkVariable<float> densidad = new NetworkVariable<float>(0, rpEveryone, wpServer);
+    // Level
+    public NetworkVariable<int> humanNumber = new(default, rpEveryone, wpServer);
+    public NetworkVariable<int> zombieNumber = new(default, rpEveryone, wpServer);
+    public NetworkVariable<int> totalCoins = new(default, rpEveryone, wpServer);
+    public NetworkVariable<int> collectedCoins = new(default, rpEveryone, wpServer);
+    public NetworkVariable<float> timeRemaining = new(default, rpEveryone, wpServer);
+    // Data builder
+    public NetworkVariable<int> mapSeed = new(default, rpEveryone, wpServer);
     #endregion
     #region NetworkBehaviour
     public void Awake()
@@ -75,8 +75,8 @@ public class GameManager : NetworkBehaviour
     }
     public void Start()
     {
-        Instance.densidad.Value = 5f;
-        Instance.tiempo.Value = 5;
+        densidad.Value = 5f;
+        tiempo.Value = 5;
         nm = NetworkManager.Singleton;
         if (IsServer)
         {
@@ -112,7 +112,7 @@ public class GameManager : NetworkBehaviour
     #endregion
     private void HandleClientConnected(ulong clientId)
     {
-        if (!IsServer) return;
+        if (!IsServer || canJoin) return;
         readyStates[clientId] = false;
         Debug.Log($"Client {clientId} connected");
     }
@@ -189,6 +189,7 @@ public class GameManager : NetworkBehaviour
         Debug.Log($"Client {clientId} is ready.");
         if (AllReady())
         {
+            canJoin = true;
             Debug.Log("All clients are ready. Starting game...");
             Debug.Log("Estados de ready antes de iniciar partida:");
             foreach (var kvp in readyStates)
@@ -246,18 +247,14 @@ public class GameManager : NetworkBehaviour
     public void TryConvertServerRpc(ulong id)
     {
         if (!IsServer) return;
-        if (NetworkManager.Singleton.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject obj))
+        if (nm.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject obj))
         {
             PlayerController player = obj.GetComponent<PlayerController>();
             if (player != null && !player.isZombie)
             {
                 //Convertir el humano
                 ConvertHuman(obj);
-
             }
-
         }
     }
-
 }
-
