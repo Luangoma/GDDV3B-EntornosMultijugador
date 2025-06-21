@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class ZombieCollisionHandler : MonoBehaviour
 {
-    /*private void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision collision)
     {
         PlayerController playerController = collision.gameObject.GetComponent<PlayerController>();
         Debug.Log("Colisión detectada con " + collision.gameObject.name);
@@ -19,13 +19,6 @@ public class ZombieCollisionHandler : MonoBehaviour
                 levelManager.ChangeToZombie(collision.gameObject, playerController.enabled);
             }
         }
-    }*/
-
-    private void OnCollisionEnter(Collision collision)
-    {
-        Debug.Log("Colision detectada con " + collision.gameObject.name);
-        PlayerController otherPlayer = collision.gameObject.GetComponent<PlayerController>();
-        if (otherPlayer != null && !otherPlayer.isZombie) GameManager.Instance.TryConvertServerRpc(otherPlayer.NetworkObjectId);
     }
 }
 
