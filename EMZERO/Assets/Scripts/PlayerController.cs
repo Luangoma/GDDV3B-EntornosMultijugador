@@ -1,4 +1,5 @@
 using System;
+using System.Xml.Serialization;
 using TMPro;
 using Unity.Netcode;
 using UnityEngine;
@@ -7,12 +8,11 @@ using UnityEngine.UIElements;
 
 public class PlayerController : NetworkBehaviour
 {
-    private TextMeshProUGUI coinText;
+
+
     System.Random rand = new System.Random();
     [SerializeField] private GameObject playerCameraPrefab;
     [Header("Stats")]
-    // Ahora es variable compartida -- En un foro vi cosas de permisos como NetworkVariableReading.everyone o algo asi
-    public NetworkVariable<int> CoinsCollected = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     [Header("Character settings")]
     public bool isZombie = false; // Añadir una propiedad para el estado del jugador
@@ -27,14 +27,26 @@ public class PlayerController : NetworkBehaviour
     private float horizontalInput;         // Entrada horizontal (A/D o flechas)
     private float verticalInput;           // Entrada vertical (W/S o flechas)
 
-    private NetworkVariable<Quaternion> Rotation = new NetworkVariable<Quaternion>();
+    private TextMeshProUGUI coinText;
 
+    #region Variables compartidas/game manager
+    private NetworkVariable<Quaternion> Rotation = new NetworkVariable<Quaternion>();
     private NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
 
+<<<<<<< HEAD
     private GameManager gm;
+=======
+    GameManager gameManager;
+    GameObject camObj;
+    #endregion
+
+
+
+>>>>>>> main
 
     public override void OnNetworkSpawn()
     {
+        gameManager = GameManager.Instance;
         if (IsOwner)
         {
             // Asigna la cámara principal a este jugador local
@@ -48,23 +60,40 @@ public class PlayerController : NetworkBehaviour
             //    }
             //}
             // Instancia una cámara solo para este jugador
-            if (playerCameraPrefab == null)
+            Camera mainCam = Camera.main;
+            if (mainCam != null)
             {
-                Debug.LogWarning("playerCameraPrefab no asignado en PlayerController.");
-                return;
-            }
-            GameObject camObj = Instantiate(playerCameraPrefab);
-            Camera cam = camObj.GetComponent<Camera>();
-            cam.tag = "MainCamera"; // Opcional, si quieres usar Camera.main
-            cameraTransform = cam.transform;
+                cameraTransform = mainCam.transform;
+                camObj = mainCam.gameObject;
 
-            // Asigna el jugador al CameraController de esa cámara
-            CameraController cameraController = camObj.GetComponent<CameraController>();
-            if (cameraController != null)
-            {
-                Debug.Log("Cámara asignada al jugador local");
-                cameraController.player = this.transform;
+                // Asigna el jugador al CameraController de esa cámara
+                CameraController cameraController = camObj.GetComponent<CameraController>();
+                if (cameraController != null)
+                {
+                    Debug.Log("Cámara existente asignada al nuevo jugador local");
+                    cameraController.player = this.transform;
+                }
             }
+            else { 
+                if (playerCameraPrefab == null)
+                {
+                    Debug.LogWarning("playerCameraPrefab no asignado en PlayerController.");
+                    return;
+                }
+                camObj = Instantiate(playerCameraPrefab);
+                Camera cam = camObj.GetComponent<Camera>();
+                cam.tag = "MainCamera";
+                cameraTransform = cam.transform;
+
+                // Asigna el jugador al CameraController de esa cámara
+                CameraController cameraController = camObj.GetComponent<CameraController>();
+                if (cameraController != null)
+                {
+                    Debug.Log("Cámara asignada al jugador local");
+                    cameraController.player = this.transform;
+                }
+            }
+
 
         }
         else
@@ -73,13 +102,12 @@ public class PlayerController : NetworkBehaviour
             Rotation.OnValueChanged += OnRotationChanged;
         }
 
-        CoinsCollected.OnValueChanged += OnCoinsIncreased;
+        gameManager.collectedCoins.OnValueChanged += OnCoinsIncreased;
     }
 
     // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
     private void OnCoinsIncreased(int previousValue, int newValue)
     {
-        CoinsCollected.Value = newValue;
         UpdateCoinUI();
     }
 
@@ -93,7 +121,7 @@ public class PlayerController : NetworkBehaviour
     {
         transform.rotation = newRot;
     }
-    
+
 
     // Metodo cutre preliminar que asigna el contolador del host a uno de los jugadores ya instanciados
     //public override void OnNetworkSpawn()
@@ -118,43 +146,46 @@ public class PlayerController : NetworkBehaviour
         // Todo esto solo funciona en la escena de la partida, porque el canvas no existe en el menu
         // -----------------------------------------------------------------------------------------
         // Buscar el objeto "CanvasPlayer" en la escena
+<<<<<<< HEAD
 
         gm = FindObjectOfType<GameManager>();
 
+=======
+        CanvasStart();
+
+    }
+
+    private void CanvasStart()
+    {
+        if (!IsOwner)
+        {
+            // Si no eres owner, no tienes camara
+            cameraTransform = null;
+            return;
+        }
+>>>>>>> main
         GameObject canvas = GameObject.Find("CanvasPlayer");
 
         if (canvas != null)
         {
-            if (IsOwner)
-            {
-                cameraTransform = Camera.main.transform;
-                // Instanciar una nueva cámara solo para este cliente
-                //GameObject cameraObj = Instantiate(cameraPrefab);
-                //cameraTransform = cameraObj.GetComponent<Camera>().transform;
-            }
-            else
-            {
-                // Si no eres owner, no tienes camara
-                cameraTransform = null;
-            }
-            Debug.Log("Canvas encontrado");
 
-            // Buscar el Panel dentro del CanvasHud
+            cameraTransform = Camera.main.transform;
             Transform panel = canvas.transform.Find("PanelHud");
+
             if (panel != null)
             {
                 // Buscar el TextMeshProUGUI llamado "CoinsValue" dentro del Panel
                 Transform coinTextTransform = panel.Find("CoinsValue");
+
                 if (coinTextTransform != null)
                 {
                     coinText = coinTextTransform.GetComponent<TextMeshProUGUI>();
                 }
+
             }
             UpdateCoinUI();
         }
-
     }
-
     void Update()
     {
         // El jugador solamente controla su personaje
@@ -170,7 +201,7 @@ public class PlayerController : NetworkBehaviour
 
         // Mover el jugador
         MovePlayer();
-        
+
         // Manejar las animaciones del jugador
         HandleAnimations();
     }
@@ -202,11 +233,17 @@ public class PlayerController : NetworkBehaviour
     }
     private void OnDestroy()
     {
-        Rotation.OnValueChanged -= OnRotationChanged;        
+        Rotation.OnValueChanged -= OnRotationChanged;
         Position.OnValueChanged -= OnPositionChanged;
-        
+        if (isZombie)
+        {
+            gameManager.zombieNumber.Value--;
+        }
+        else { 
+            gameManager.humanNumber.Value--;
+        }
     }
-    
+
 
     void HandleAnimations()
     {
@@ -216,10 +253,18 @@ public class PlayerController : NetworkBehaviour
 
     public void CoinCollected()
     {
+<<<<<<< HEAD
         if (!isZombie && IsOwner)
         {
             Debug.Log($"Moneda recolectada por humano. Actual: {CoinsCollected.Value}");
             RequestCoinCollectionServerRpc();
+=======
+        if (!IsServer) return;
+        if (!isZombie) // Solo los humanos pueden recoger monedas
+        {
+            gameManager.collectedCoins.Value++;
+            UpdateCoinUI();
+>>>>>>> main
         }
     }
 
@@ -239,28 +284,10 @@ public class PlayerController : NetworkBehaviour
     {
         if (coinText != null)
         {
-            coinText.text = $"{CoinsCollected.Value}";
+            coinText.text = $"{gameManager.collectedCoins.Value}";
         }
     }
 
-    // Metodo para que el servidor reciba que se ha cogido una moneda adicional
-    [ServerRpc]
-    public void coinCollectedServerRpc() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
-    {
-        CoinsCollected.Value++;
-        //UpdateCoinOnlineClientRpc(CoinsCollected.Value);
-        UpdateCoinUI();
-    }
-
-    // Metodo que se llamara cuando el servidor mande un mensajito
-    // Transferir la nueva data de las monedas a todas las interfaces
-    // Porque en teoria las interfaces no son comunes
-    [ClientRpc]
-    void UpdateCoinOnlineClientRpc(int coins)
-    {
-        CoinsCollected.Value = coins;
-        UpdateCoinUI();
-    }
 
     // Actualizar del movimiento del personaje al servidor en tiempo real
     [ServerRpc]
@@ -276,7 +303,6 @@ public class PlayerController : NetworkBehaviour
         transform.rotation = quaternion;
         Rotation.Value = quaternion;
     }
-
 
     /// <summary>
     /// Temporal para pruebas ! ! ! ! ! !  ! ! ! ! ! ! !  ! ! ! !  ! 
