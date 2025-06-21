@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using Unity.Netcode;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
@@ -18,24 +17,20 @@ public class MenuManager : MonoBehaviour
      * PantallaMenuInicio = 0,
      * PantallaClienteHostSeleccion = 1,
      * PantallaCliente = 2,
-     * PantallaModo = 3,
-     * PantallaModoMonedas = 4,
-     * PantallaModoTiempo = 5,
-     * PantallaLobyHostMonedas = 6,
-     * PantallaLobyHostTiempo = 7,
-     * PantallaLobyCliente = 8,
+     * PantallaLobyHost = 3,
+     * PantallaLobyCliente = 4,
      */
-    private List<int> screens = new List<int>() { 0, 1, 2, 3, 4, 5, 6, 7, 8 };
-    private List<int> screenSelect = new List<int>() { 1, 3, 2, 7, 4, 5, 6, 6 };
+    private List<int> screens = new List<int>() { 0, 1, 2, 3, 4 };
+    private List<int> screenSelect = new List<int>() { 1, 3, 2, 4 };
 
+    [SerializeField]
+    private GameObject actual;
     public enum GameConnection : int
     {
         Cliente,
         Servidor,
         Host
     }
-
-    public GameObject actual;
     public GameConnection conxion;
 
     #region NetworkBehaviour
@@ -51,7 +46,7 @@ public class MenuManager : MonoBehaviour
         for (var i = 0; i < buttons.Count; i++)
         {
             int pantalla = screens[screenSelect[i]];
-            buttons[i].onClick.AddListener(delegate { CambioPantalla(pantalla); });
+            buttons[i].onClick.AddListener(delegate { CambiarEscenaAdelante(); CambioPantalla(pantalla); });
         }
         foreach (var item in atrasButtons)
         {
@@ -69,24 +64,18 @@ public class MenuManager : MonoBehaviour
     }
     public void CambiarEscenaAdelante()
     {
-        AddSceneForward();
+        historial.Push(actual);
         actual.gameObject.SetActive(false);
     }
-    public void AddSceneForward()
+    public void CambioPantalla(int escena)
     {
-        historial.Push(actual);
+        actual = pantallas[escena];
+        actual.gameObject.SetActive(true);
     }
     public void CambiarEscenaAtras()
     {
         actual.gameObject.SetActive(false);
         actual = historial.Pop();
-        actual.gameObject.SetActive(true);
-    }
-    #endregion
-    #region Pantallas
-    public void CambioPantalla(int escena)
-    {
-        actual = pantallas[escena];
         actual.gameObject.SetActive(true);
     }
     #endregion
@@ -127,7 +116,7 @@ public class MenuManager : MonoBehaviour
     #region Conection
     public void playerReady()
     {
-        gm.SetReadyServerRpc(NetworkManager.Singleton.LocalClientId);
+        gm.SetReadyServerRpc(nm.LocalClientId);
     }
     public void StartConections()
     {

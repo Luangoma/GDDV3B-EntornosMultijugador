@@ -20,7 +20,7 @@ public class GameManager : NetworkBehaviour
 
     public static GameManager Instance { get; private set; }
     public NetworkVariable<GameMode> modo = new NetworkVariable<GameMode>(GameMode.Monedas, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
-    public NetworkVariable<NetString> codigo = new NetworkVariable<NetString>(new NetString(){Value=""}, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
+    public NetworkVariable<NetString> codigo = new NetworkVariable<NetString>(new NetString() { Value = "" }, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<int> tiempo = new NetworkVariable<int>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     public NetworkVariable<float> densidad = new NetworkVariable<float>(0, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private NetworkManager nm;
@@ -34,20 +34,6 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> collectedCoins = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
     public NetworkVariable<float> timeRemaining = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
     public NetworkVariable<int> mapSeed = new(writePerm: NetworkVariableWritePermission.Server, readPerm: NetworkVariableReadPermission.Everyone);
-
-    #endregion
-    public void Awake()
-    {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(this);
-        }
-        else
-        {
-            Destroy(this); // Esto evita m�ltiples instancias
-        }
-    }
 
     public struct NetString : INetworkSerializable, IEquatable<NetString>
     {
@@ -73,9 +59,24 @@ public class GameManager : NetworkBehaviour
         }
     }
 
-    // Start is called before the first frame update
+    #endregion
+    #region NetworkBehaviour
+    public void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(this);
+        }
+        else
+        {
+            Destroy(this); // Esto evita m�ltiples instancias
+        }
+    }
     void Start()
     {
+        Instance.densidad.Value = 5f;
+        Instance.tiempo.Value = 5;
         nm = NetworkManager.Singleton;
         if (IsServer)
         {
@@ -100,7 +101,6 @@ public class GameManager : NetworkBehaviour
         }
 
     }
-
     public override void OnNetworkSpawn()
     {
         if (humanPrefab == null || zombiePrefab == null)
@@ -109,14 +109,13 @@ public class GameManager : NetworkBehaviour
             return;
         }
     }
-
+    #endregion
     private void HandleClientConnected(ulong clientId)
     {
         if (!IsServer) return;
         readyStates[clientId] = false;
         Debug.Log($"Client {clientId} connected");
     }
-
     public void SpawnClient(ulong clientId, Vector3 spawnPos, GameObject prefab)
     {
         if (!IsServer) return; // Solo el servidor debe spawnear
@@ -158,7 +157,6 @@ public class GameManager : NetworkBehaviour
         // Debe haber al menos 2 jugadores (host + al menos un cliente)
         return nm.ConnectedClientsIds.Count > 0;
     }
-
     private void OnNetworkSceneLoaded(string sceneName, LoadSceneMode mode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
         if (sceneName == "GameScene" && nm.IsServer)
@@ -181,8 +179,6 @@ public class GameManager : NetworkBehaviour
         }
         nm.SceneManager.OnLoadEventCompleted -= OnNetworkSceneLoaded;
     }
-
-
     // Llamado por el cliente al pulsar "Listo"
     [ServerRpc(RequireOwnership = false)]
     public void SetReadyServerRpc(ulong localClientId, ServerRpcParams rpcParams = default)
