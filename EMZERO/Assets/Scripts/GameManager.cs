@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using Unity.Netcode;
+//using UnityEditor.VersionControl;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -9,7 +10,7 @@ public class GameManager : NetworkBehaviour
 {
     [SerializeField] private GameObject humanPrefab;
     [SerializeField] private GameObject zombiePrefab;
-
+    public NetworkVariable<bool> isGameOver = new NetworkVariable<bool>(false, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
     private bool canJoin = true;
 
@@ -84,12 +85,12 @@ public class GameManager : NetworkBehaviour
             nm.OnClientDisconnectCallback += HandleClientDisconnected;
             mapSeed.Value = UnityEngine.Random.Range(MINSEED, MAXSEED);
         }
-        // A�adir el host a readyStates
+        // A adir el host a readyStates
         ulong hostId = nm.LocalClientId;
         if (!readyStates.ContainsKey(hostId))
         {
             readyStates[hostId] = false;
-            Debug.Log($"Host (clientId {hostId}) a�adido a readyStates.");
+            Debug.Log($"Host (clientId {hostId}) a adido a readyStates.");
         }
     }
     public override void OnDestroy()
@@ -222,24 +223,32 @@ public class GameManager : NetworkBehaviour
     public void SetTotalCoins(int coins)
     {
         totalCoins.Value = coins;
+        Debug.Log($"Total de monedas generadas en el nivel: {totalCoins.Value}");
+
     }
 
     public void ConvertHuman(NetworkObject p)
     {
         if (!IsServer) return;
-        //humanNumber.Value--;      // Esto ya lo hace el propio humano en el despawn
+        humanNumber.Value--;      // Esto ya lo hace el propio humano en el despawn
         // Destruir el humano
         // Guardarme sus coordenadas y rotacion
         Vector3 position = p.transform.position;
         Quaternion rotation = p.transform.rotation;
         ulong clientId = p.OwnerClientId;
+
         p.Despawn();
+
         // Crear el zombie
         GameObject zombie = Instantiate(zombiePrefab, position, rotation);
         zombie.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
 
         // Añadir a la cuenta de zombies
         zombieNumber.Value++;
+
+        Debug.Log($"Conversión completada. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
+
+        CheckWinConditionsServerRpc();
 
     }
 
@@ -255,6 +264,108 @@ public class GameManager : NetworkBehaviour
                 //Convertir el humano
                 ConvertHuman(obj);
             }
+<<<<<<< HEAD
         }
     }
+=======
+        }
+    }
+    [ServerRpc]
+    public void NotifyCoinCollectedServerRpc()
+    {
+        collectedCoins.Value++;
+        Debug.Log($"Monedas totales (global): {collectedCoins.Value}");
+
+        // Verificar condici n de victoria
+        CheckWinConditionsServerRpc();
+    }
+
+
+    [ClientRpc]
+    private void UpdateCoinsClientRpc(int newCount)
+    {
+        // Sincronizar el conteo en todos los jugadores
+        foreach (var player in FindObjectsOfType<PlayerController>())
+        {
+            player.UpdateCoinUI(newCount);
+        }
+    }
+
+    [ServerRpc]
+    public void NotifyPlayerTransformedServerRpc(bool becameZombie)
+    {
+        Debug.Log("NotifyPlayerTransformedServerRpc llamado");
+
+
+        if (becameZombie)
+        {
+            humanNumber.Value--;
+            zombieNumber.Value++;
+            Debug.Log($"Se transform  en zombie. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
+        }
+        else
+        {
+            humanNumber.Value++;
+            zombieNumber.Value--;
+            Debug.Log($"Se transform  en humano. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
+        }
+
+        CheckWinConditionsServerRpc();
+    }
+
+
+
+    [ServerRpc]
+    private void CheckWinConditionsServerRpc()
+    {
+        //if (isGameOver.Value) return; // No hacer nada si el juego ya terminó
+
+        Debug.Log($"Verificando condiciones - Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}, Monedas: {collectedCoins.Value}/{totalCoins.Value}");
+
+        // Zombies ganan si no quedan humanos
+        if (humanNumber.Value <= 0)
+        {
+            EndGame("¡Los Zombies ganan!");
+            Debug.Log("WC humanos 0");
+            return;
+        }
+
+        // Verificar condiciones según el modo de juego
+        switch (modo.Value)
+        {
+            case GameMode.Monedas:
+                if (collectedCoins.Value >= totalCoins.Value && totalCoins.Value > 0)
+                {
+                    EndGame("¡Los Humanos ganan! Han recogido todas las monedas");
+                    Debug.Log("WC humanos monedas");
+
+                }
+                break;
+
+            case GameMode.Tiempo:
+                // La condición de tiempo se maneja en Update de LevelManager
+                // Cuando timeRemaining <= 0, humanos ganan
+                if (timeRemaining.Value <= 0)
+                {
+                    EndGame("¡Los Humanos ganan! Sobrevivieron el tiempo límite");
+                    Debug.Log("WC humanos tiempo");
+
+                }
+                break;
+        }
+    }
+
+    [ClientRpc]
+    private void EndGameClientRpc(string message)
+    {
+        FindObjectOfType<LevelManager>().ShowGameOverPanel(message);
+    }
+
+    public void EndGame(string message)
+    {
+        isGameOver.Value = true;
+        EndGameClientRpc(message);
+    }
+
+>>>>>>> feature/Win-Conditions-Implementation
 }

@@ -211,17 +211,16 @@ public class LevelManager : MonoBehaviour
         //Cambiar contadores
         //gm.ConvertHuman();
 
-        // Verificar condiciones de victoria cuando se tranforme un humano a zombie
-        CheckWinConditions();
+        
     }
 
     public void ChangeToZombie(GameObject human, bool enabled)
     {
         return;
         Debug.Log("Cambiando a Zombie");
-        if (human == null) { Debug.LogError("No se encontr� el humano actual."); return; }
+        if (human == null) { Debug.LogError("No se encontr  el humano actual."); return; }
 
-        // Guardar la posici�n, rotaci�n y uniqueID del humano actual
+        // Guardar la posici n, rotaci n y uniqueID del humano actual
         Vector3 playerPosition = human.transform.position;
         Quaternion playerRotation = human.transform.rotation;
         string uniqueID = human.GetComponent<PlayerController>().uniqueID;
@@ -229,7 +228,7 @@ public class LevelManager : MonoBehaviour
         // Destruir el humano actual
         RequestDestroyServerRpc(human);
 
-        // Instanciar el prefab del zombie en la misma posici�n y rotaci�n
+        // Instanciar el prefab del zombie en la misma posici n y rotaci n
         GameObject zombie = Instantiate(zombiePrefab, playerPosition, playerRotation);
         if (enabled) { zombie.tag = "Player"; }
 
@@ -239,18 +238,18 @@ public class LevelManager : MonoBehaviour
 
         playerController.enabled = enabled;
         playerController.isZombie = true; // Cambiar el estado a zombie
-        playerController.uniqueID = uniqueID; // Mantener el identificador �nico
+        playerController.uniqueID = uniqueID; // Mantener el identificador  nico
 
         UpdateTeamUI();
 
         if (enabled)
         {
-            // Obtener la referencia a la c�mara principal
+            // Obtener la referencia a la c mara principal
             Camera mainCamera = Camera.main;
 
-            if (mainCamera == null) { Debug.LogError("No se encontr� la c�mara principal."); return; }
+            if (mainCamera == null) { Debug.LogError("No se encontr  la c mara principal."); return; }
 
-            // Obtener el script CameraController de la c�mara principal
+            // Obtener el script CameraController de la c mara principal
             CameraController cameraController = mainCamera.GetComponent<CameraController>();
 
             if (cameraController != null)
@@ -259,7 +258,7 @@ public class LevelManager : MonoBehaviour
                 cameraController.player = zombie.transform;
                 playerController.enabled = enabled;
                 playerController.isZombie = true; // Cambiar el estado a zombie
-                playerController.uniqueID = uniqueID; // Mantener el identificador �nico
+                playerController.uniqueID = uniqueID; // Mantener el identificador  nico
                 //gm.ConvertHuman();
                 UpdateTeamUI();
 
@@ -277,23 +276,23 @@ public class LevelManager : MonoBehaviour
 
         if (currentPlayer != null)
         {
-            // Guardar la posici�n y rotaci�n del jugador actual
+            // Guardar la posici n y rotaci n del jugador actual
             Vector3 playerPosition = currentPlayer.transform.position;
             Quaternion playerRotation = currentPlayer.transform.rotation;
 
             // Destruir el jugador actual
             RequestDestroyServerRpc(currentPlayer);
 
-            // Instanciar el prefab del humano en la misma posici�n y rotaci�n
+            // Instanciar el prefab del humano en la misma posici n y rotaci n
             GameObject human = Instantiate(playerPrefab, playerPosition, playerRotation);
             human.tag = "Player";
 
-            // Obtener la referencia a la c�mara principal
+            // Obtener la referencia a la c mara principal
             Camera mainCamera = Camera.main;
 
             if (mainCamera != null)
             {
-                // Obtener el script CameraController de la c�mara principal
+                // Obtener el script CameraController de la c mara principal
                 CameraController cameraController = mainCamera.GetComponent<CameraController>();
 
                 if (cameraController != null)
@@ -304,14 +303,14 @@ public class LevelManager : MonoBehaviour
 
                 // Obtener el componente PlayerController del humano instanciado
                 playerController = human.GetComponent<PlayerController>();
-                // Asignar el transform de la c�mara al PlayerController
+                // Asignar el transform de la c mara al PlayerController
                 if (playerController != null)
                 {
                     playerController.enabled = true;
                     playerController.cameraTransform = mainCamera.transform;
                     playerController.isZombie = false; // Cambiar el estado a humano
-                    //numberOfHumans++; // Aumentar el n�mero de humanos
-                    //numberOfZombies--; // Reducir el n�mero de zombis
+                    //numberOfHumans++; // Aumentar el n mero de humanos
+                    //numberOfZombies--; // Reducir el n mero de zombis
                 }
                 else
                 {
@@ -320,12 +319,12 @@ public class LevelManager : MonoBehaviour
             }
             else
             {
-                Debug.LogError("No se encontr� la c�mara principal.");
+                Debug.LogError("No se encontr  la c mara principal.");
             }
         }
         else
         {
-            Debug.LogError("No se encontr� el jugador actual.");
+            Debug.LogError("No se encontr  el jugador actual.");
         }
     }
 
@@ -349,7 +348,7 @@ public class LevelManager : MonoBehaviour
 
     private void HandleTimeLimitedGameMode()
     {
-        // Implementar la l�gica para el modo de juego basado en tiempo
+        // Implementar la l gica para el modo de juego basado en tiempo
         if (isGameOver) return;
 
         // Decrementar remainingSeconds basado en Time.deltaTime
@@ -366,37 +365,16 @@ public class LevelManager : MonoBehaviour
         int minutesRemaining = Mathf.FloorToInt(remainingSeconds / 60);
         int secondsRemaining = Mathf.FloorToInt(remainingSeconds % 60);
 
-        // Actualizar el texto de la interfaz de usuario
-        //if (gameModeText != null)
-        //{
-        //   gameModeText.text = $"{minutesRemaining:D2}:{secondsRemaining:D2}";
-        //}
-
-        //Condici�n de victoria por sobrevivir
+        //Condici n de victoria por sobrevivir
         if (remainingSeconds <= 0)
         {
             remainingSeconds = 0;
             isGameOver = true;
-            Debug.Log("�Se acab� el tiempo, los Humanos han sobrevivido!");
-            GameOver("�Se acab� el tiempo, los Humanos han sobrevivido!");
+            Debug.Log(" Se acab  el tiempo, los Humanos han sobrevivido!");
+            GameOver(" Se acab  el tiempo, los Humanos han sobrevivido!");
         }
 
     }
-
-    /*private void HandleCoinBasedGameMode()
-    {
-        if (isGameOver) return;
-
-        // Implementar la l�gica para el modo de juego basado en monedas
-        if (gameModeText != null && playerController != null)
-        {
-            gameModeText.text = $"{gm.collectedCoins.Value}/{gm.totalCoins.Value}";
-            if (gm.collectedCoins.Value == gm.totalCoins.Value)
-            {
-                isGameOver = true;
-            }
-        }
-    }*/
 
     private void ShowGameOverPanel()
     {
@@ -405,7 +383,7 @@ public class LevelManager : MonoBehaviour
             Time.timeScale = 0f;
             gameOverPanel.SetActive(true); // Muestra el panel de pausa
 
-            // Gesti�n del cursor
+            // Gesti n del cursor
             Cursor.lockState = CursorLockMode.None; // Desbloquea el cursor
             Cursor.visible = true; // Hace visible el cursor
         }
@@ -413,53 +391,21 @@ public class LevelManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        // Gesti�n del cursor
+        // Gesti n del cursor
         Cursor.lockState = CursorLockMode.Locked; // Bloquea el cursor
         Cursor.visible = false; // Oculta el cursor
 
-        // Cargar la escena del men� principal
+        // Cargar la escena del men  principal
         SceneManager.LoadScene("MenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
     }
 
-    //Habr� que a�adir que se lleve a la interfaz de fin de partida, pero de momento con un debug para comprobar que funciona
-    public void CheckWinConditions()
-    {
-        if (isGameOver) return;
-
-        // Condici�n 1: Si no quedan humanos, los zombies ganan
-        if (gm.humanNumber.Value <= 0)
-        {
-            Debug.Log("�Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
-            GameOver("�Los Zombies han acabado con todos los Humanos. Los Zombies ganan!");
-            return;
-        }
-
-        // Condici�n 2: En modo monedas, si los humanos cogen todas las monedas ganan
-        if (gameMode == GameMode.Monedas && playerController != null &&
-            gm.collectedCoins.Value >= gm.totalCoins.Value)
-        {
-            Debug.Log("�Todas las monedas han sido recogidas. Los Humanos ganan!");
-            GameOver("�Todas las monedas han sido recogidas. Los Humanos ganan!");
-            return;
-        }
-
-        // Condici�n 3: Si no quedan zombies, los humanos ganan. Suponiendo los zombies se pueden ir de la partida sin que pete el juego
-        if (gm.zombieNumber.Value <= 0)
-        {
-            Debug.Log("�No quedan Zombies. Los Humanos ganan!");
-            GameOver("�No quedan Zombies. Los Humanos ganan!");
-            return;
-        }
-
-    }
-
-    private void GameOver(string message)
+    public void GameOver(string message)
     {
         isGameOver = true;
         ShowGameOverPanel(message);
     }
 
-    private void ShowGameOverPanel(string message)
+    public void ShowGameOverPanel(string message)
     {
         if (gameOverPanel != null)
         {
