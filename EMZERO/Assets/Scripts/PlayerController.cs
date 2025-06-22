@@ -1,6 +1,7 @@
 using System;
 using System.Xml.Serialization;
 using TMPro;
+using Unity.Collections;
 using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -12,6 +13,9 @@ public class PlayerController : NetworkBehaviour
 
     System.Random rand = new System.Random();
     [SerializeField] private GameObject playerCameraPrefab;
+    [SerializeField] private GameObject playerNameUIPrefab;
+    private TextMeshProUGUI playerNameText;
+    private GameObject playerNameUIInstance;
     [Header("Stats")]
 
     [Header("Character settings")]
@@ -32,6 +36,8 @@ public class PlayerController : NetworkBehaviour
     #region Variables compartidas/game manager
     private NetworkVariable<Quaternion> Rotation = new NetworkVariable<Quaternion>();
     private NetworkVariable<Vector3> Position = new NetworkVariable<Vector3>();
+    public NetworkVariable<FixedString64Bytes> playerName = new NetworkVariable<FixedString64Bytes>(
+    default, NetworkVariableReadPermission.Everyone, NetworkVariableWritePermission.Server);
 
     GameManager gameManager;
     GameObject camObj;
@@ -57,6 +63,7 @@ public class PlayerController : NetworkBehaviour
             //}
             // Instancia una cámara solo para este jugador
             Camera mainCam = Camera.main;
+            Camera cam = null;
             if (mainCam != null)
             {
                 cameraTransform = mainCam.transform;
@@ -69,6 +76,7 @@ public class PlayerController : NetworkBehaviour
                     Debug.Log("Cámara existente asignada al nuevo jugador local");
                     cameraController.player = this.transform;
                 }
+
             }
             else { 
                 if (playerCameraPrefab == null)
@@ -77,7 +85,7 @@ public class PlayerController : NetworkBehaviour
                     return;
                 }
                 camObj = Instantiate(playerCameraPrefab);
-                Camera cam = camObj.GetComponent<Camera>();
+                cam = camObj.GetComponent<Camera>();
                 cam.tag = "MainCamera";
                 cameraTransform = cam.transform;
 
@@ -88,9 +96,18 @@ public class PlayerController : NetworkBehaviour
                     Debug.Log("Cámara asignada al jugador local");
                     cameraController.player = this.transform;
                 }
+                // Generar nombre nuevo solo en el caso de que la camara tambien sea nueva
             }
-
-
+            Canvas[] canvases = camObj.GetComponentsInChildren<Canvas>(true);
+            foreach (var canvas in canvases)
+            {
+                if (canvas.renderMode == RenderMode.WorldSpace && cam != null)
+                {
+                    canvas.worldCamera = cam;
+                }
+            }
+            // Utiliza la lista en Gamemanager para obtener el nombre de cada player
+            SetPlayerNameServerRpc();
         }
         else
         {
@@ -98,7 +115,17 @@ public class PlayerController : NetworkBehaviour
             Rotation.OnValueChanged += OnRotationChanged;
         }
 
+        // Instanciar el UI del nombre
+        if (playerNameUIPrefab != null)
+        {
+            playerNameUIInstance = Instantiate(playerNameUIPrefab, transform);
+            playerNameUIInstance.transform.localPosition = new Vector3(0, 0.7f, 0); // Ajustar altura
+            playerNameText = playerNameUIInstance.GetComponentInChildren<TextMeshProUGUI>();
+            playerNameText.text = playerName.Value.ToString();
+        }
+
         gameManager.collectedCoins.OnValueChanged += OnCoinsIncreased;
+        playerName.OnValueChanged += OnPlayerNameChanged;
     }
 
     // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
@@ -118,7 +145,24 @@ public class PlayerController : NetworkBehaviour
         transform.rotation = newRot;
     }
 
+    [ServerRpc]
+    private void SetPlayerNameServerRpc(ServerRpcParams rpcParams = default)
+    {
+        //if (gameManager.backupPlayerNames[rpcParams.Receive.SenderClientId].Length > 0)
+        //{
+        //    Debug.LogError("Este jugador ya tenía nombre");
+        //    Debug.Log($"Player last name: {playerName.Value}");
+        //    return;
+        //}
+        playerName.Value = gameManager.backupPlayerNames[rpcParams.Receive.SenderClientId];
+        Debug.Log($"Player name set to: {playerName.Value}");
+    }
 
+    private void OnPlayerNameChanged(FixedString64Bytes oldValue, FixedString64Bytes newValue)
+    {
+        if (playerNameText != null)
+            playerNameText.text = newValue.ToString();
+    }
     // Metodo cutre preliminar que asigna el contolador del host a uno de los jugadores ya instanciados
     //public override void OnNetworkSpawn()
     //{
@@ -174,6 +218,17 @@ public class PlayerController : NetworkBehaviour
 
             }
             UpdateCoinUI();
+        }
+    }
+    private void LateUpdate()
+    {
+        // Importante, este codigo no requiere de if (IsOwner) porque se ejecuta en todos los clientes,
+        // para que el texto de cada cliente mire a la camara de cada cliente y se vea recto en su cliente
+        // Hacer que el nombre mire siempre a la cámara
+        if (playerNameUIInstance != null && Camera.main != null)
+        {
+            playerNameUIInstance.transform.LookAt(Camera.main.transform);
+            playerNameUIInstance.transform.Rotate(0, 180, 0); // Para que no salga al revés
         }
     }
     void Update()

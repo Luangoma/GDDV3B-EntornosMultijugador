@@ -11,12 +11,14 @@ public class GameManager : NetworkBehaviour
     [SerializeField] private GameObject zombiePrefab;
 
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
+    public Dictionary<ulong, string> backupPlayerNames = new Dictionary<ulong, string>();
     private bool canJoin = true;
 
     const int MINSEED = 0;
     const int MAXSEED = 25000;
     private List<Vector3> spawnPoints; // Centros de las habitaciones - las saca del level builder
     private NetworkManager nm;
+    private UniqueIdGenerator uniqueIdGenerator;
     #region Statics
     public static GameManager Instance { get; private set; }
     static NetworkVariableReadPermission rpEveryone = NetworkVariableReadPermission.Everyone;
@@ -78,6 +80,7 @@ public class GameManager : NetworkBehaviour
         densidad.Value = 5f;
         tiempo.Value = 5;
         nm = NetworkManager.Singleton;
+        uniqueIdGenerator = new UniqueIdGenerator();
         if (IsServer)
         {
             nm.OnClientConnectedCallback += HandleClientConnected;
@@ -170,6 +173,7 @@ public class GameManager : NetworkBehaviour
             {
                 if (aux >= humanNumber.Value) prefab = zombiePrefab;
 
+                backupPlayerNames[clientId] = uniqueIdGenerator.GenerateUniqueID(); // Genera el nombre, que luego cada player lo asigna a su network variable en playercontroller
                 SpawnClient(clientId, spawnPoints[aux], prefab);
 
                 aux++;

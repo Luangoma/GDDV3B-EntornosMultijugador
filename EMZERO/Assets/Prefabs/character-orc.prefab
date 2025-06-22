@@ -186,6 +186,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerCameraPrefab: {fileID: 336062020537768177, guid: fabbbb735e20308429776c1cefff5ad7, type: 3}
+  playerNameUIPrefab: {fileID: 424778626864515022, guid: d6c035dc8b2ab6440863de5eac3c6e63, type: 3}
   isZombie: 1
   uniqueID: 
   moveSpeed: 5
