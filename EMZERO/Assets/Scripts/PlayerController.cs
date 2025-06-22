@@ -32,6 +32,7 @@ public class PlayerController : NetworkBehaviour
     private float verticalInput;           // Entrada vertical (W/S o flechas)
 
     private TextMeshProUGUI coinText;
+    private TextMeshProUGUI timeText;
 
     #region Variables compartidas/game manager
     private NetworkVariable<Quaternion> Rotation = new NetworkVariable<Quaternion>();
@@ -126,6 +127,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         gameManager.collectedCoins.OnValueChanged += OnCoinsIncreased;
+        gameManager.timeRemaining.OnValueChanged += OnTimeChanged;
         playerName.OnValueChanged += OnPlayerNameChanged;
     }
 
@@ -133,6 +135,12 @@ public class PlayerController : NetworkBehaviour
     private void OnCoinsIncreased(int previousValue, int newValue)
     {
         UpdateCoinUI(newValue);
+    }
+    
+    // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
+    private void OnTimeChanged(float previousValue, float newValue)
+    {
+        UpdateTimeUI(newValue);
     }
 
     // Este metodo se dispara para cada cliente en el momento de que la networkVariable Position cambie
@@ -164,25 +172,9 @@ public class PlayerController : NetworkBehaviour
         if (playerNameText != null)
             playerNameText.text = newValue.ToString();
     }
-    // Metodo cutre preliminar que asigna el contolador del host a uno de los jugadores ya instanciados
-    //public override void OnNetworkSpawn()
-    //{
-
-    //    if (IsHost)
-    //    {
-    //        Debug.Log("Host conectado");
-
-    //    }
-    //    else if (IsClient) {
-
-    //    }
-
-    //}
 
     void Start()
     {
-        //Si no eres owner vemos si tienes una camara activa y la quitamos
-
         // -----------------------------------------------------------------------------------------
         // Todo esto solo funciona en la escena de la partida, porque el canvas no existe en el menu
         // -----------------------------------------------------------------------------------------
@@ -211,14 +203,19 @@ public class PlayerController : NetworkBehaviour
             {
                 // Buscar el TextMeshProUGUI llamado "CoinsValue" dentro del Panel
                 Transform coinTextTransform = panel.Find("CoinsValue");
+                Transform timeTextTransform = panel.Find("TimeValue");
 
                 if (coinTextTransform != null)
                 {
                     coinText = coinTextTransform.GetComponent<TextMeshProUGUI>();
                 }
-
+                if (timeTextTransform != null)
+                {
+                    timeText = timeTextTransform.GetComponent<TextMeshProUGUI>();
+                }
             }
-            UpdateCoinUI();
+            UpdateCoinUI(gameManager.collectedCoins.Value);
+            UpdateTimeUI(gameManager.timeRemaining.Value);
         }
     }
     private void LateUpdate()
@@ -314,13 +311,6 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    void UpdateCoinUI()
-    {
-        if (coinText != null)
-        {
-            coinText.text = $"{gameManager.collectedCoins.Value}";
-        }
-    }
 
     [ServerRpc]
     private void RequestCoinCollectionServerRpc()
@@ -331,10 +321,9 @@ public class PlayerController : NetworkBehaviour
 
         // Notificar al GameManager
         GameManager.Instance?.NotifyCoinCollectedServerRpc();
-
-
     }
 
+    // Llamado cuando la variable coins ha sido modificada en el servidor
     public void UpdateCoinUI(int coinCount)
     {
         if (coinText != null)
@@ -343,12 +332,11 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    [ServerRpc]
-    public void coinCollectedServerRpc() // Este suma el valor y les dice a todos los usuarios que se ha sumado una moneda
-    {
-
-        //UpdateCoinOnlineClientRpc(CoinsCollected.Value);
-        UpdateCoinUI();
+    public void UpdateTimeUI(float timeCount) {
+        if (timeText != null)
+        {
+            timeText.text = $"{timeCount.ToString("F1")}";
+        }
     }
 
 

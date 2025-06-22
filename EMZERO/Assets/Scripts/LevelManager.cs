@@ -45,7 +45,6 @@ public class LevelManager : MonoBehaviour
 
     private PlayerController playerController;
 
-    private float remainingSeconds;
     private bool isGameOver = false;
 
     public GameObject gameOverPanel; // Asigna el panel desde el inspector
@@ -122,9 +121,11 @@ public class LevelManager : MonoBehaviour
             }
         }
 
-        remainingSeconds = minutes * 60;
+        gm.timeRemaining.Value = minutes * 60;
         gm.zombieNumber.OnValueChanged += OnPlayersChange;
         gm.humanNumber.OnValueChanged += OnPlayersChange;
+        
+
         // Obtener los puntos de aparici�n y el n�mero de monedas generadas desde LevelBuilder
 
 
@@ -351,24 +352,24 @@ public class LevelManager : MonoBehaviour
         // Implementar la l gica para el modo de juego basado en tiempo
         if (isGameOver) return;
 
-        // Decrementar remainingSeconds basado en Time.deltaTime
-        remainingSeconds -= Time.deltaTime;
+        // Decrementar gm.timeRemaining.Value basado en Time.deltaTime
+        gm.timeRemaining.Value -= Time.deltaTime;
 
         // Comprobar si el tiempo ha llegado a cero
-        if (remainingSeconds <= 0)
+        if (gm.timeRemaining.Value <= 0)
         {
             isGameOver = true;
-            remainingSeconds = 0;
+            gm.timeRemaining.Value = 0;
         }
 
-        // Convertir remainingSeconds a minutos y segundos
-        int minutesRemaining = Mathf.FloorToInt(remainingSeconds / 60);
-        int secondsRemaining = Mathf.FloorToInt(remainingSeconds % 60);
+        // Convertir gm.timeRemaining.Value a minutos y segundos
+        int minutesRemaining = Mathf.FloorToInt(gm.timeRemaining.Value / 60);
+        int secondsRemaining = Mathf.FloorToInt(gm.timeRemaining.Value % 60);
 
         //Condici n de victoria por sobrevivir
-        if (remainingSeconds <= 0)
+        if (gm.timeRemaining.Value <= 0)
         {
-            remainingSeconds = 0;
+            gm.timeRemaining.Value = 0;
             isGameOver = true;
             Debug.Log(" Se acab  el tiempo, los Humanos han sobrevivido!");
             GameOver(" Se acab  el tiempo, los Humanos han sobrevivido!");

@@ -282,17 +282,6 @@ public class GameManager : NetworkBehaviour
         CheckWinConditionsServerRpc();
     }
 
-
-    [ClientRpc]
-    private void UpdateCoinsClientRpc(int newCount)
-    {
-        // Sincronizar el conteo en todos los jugadores
-        foreach (var player in FindObjectsOfType<PlayerController>())
-        {
-            player.UpdateCoinUI(newCount);
-        }
-    }
-
     [ServerRpc]
     public void NotifyPlayerTransformedServerRpc()
     {
