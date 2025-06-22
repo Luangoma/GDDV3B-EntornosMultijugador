@@ -264,11 +264,9 @@ public class GameManager : NetworkBehaviour
                 //Convertir el humano
                 ConvertHuman(obj);
             }
-<<<<<<< HEAD
         }
-    }
-=======
-        }
+    
+        
     }
     [ServerRpc]
     public void NotifyCoinCollectedServerRpc()
@@ -367,5 +365,4 @@ public class GameManager : NetworkBehaviour
         EndGameClientRpc(message);
     }
 
->>>>>>> feature/Win-Conditions-Implementation
 }
