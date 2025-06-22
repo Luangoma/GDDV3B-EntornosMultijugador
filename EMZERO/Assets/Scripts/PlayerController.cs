@@ -282,7 +282,7 @@ public class PlayerController : NetworkBehaviour
         Rotation.OnValueChanged -= OnRotationChanged;
         Position.OnValueChanged -= OnPositionChanged;
         
-        /*if (isZombie)
+        if (isZombie)
         {
             gameManager.zombieNumber.Value--;
         }
@@ -290,7 +290,7 @@ public class PlayerController : NetworkBehaviour
         {
             gameManager.humanNumber.Value--;
         }
-        */
+        gameManager.NotifyPlayerTransformedServerRpc();
     }
 
 

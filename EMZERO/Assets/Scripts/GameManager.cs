@@ -234,7 +234,7 @@ public class GameManager : NetworkBehaviour
     public void ConvertHuman(NetworkObject p)
     {
         if (!IsServer) return;
-        humanNumber.Value--;      // Esto ya lo hace el propio humano en el despawn
+        // humanNumber.Value--;      // Esto ya lo hace el propio humano en el despawn
         // Destruir el humano
         // Guardarme sus coordenadas y rotacion
         Vector3 position = p.transform.position;
@@ -294,23 +294,17 @@ public class GameManager : NetworkBehaviour
     }
 
     [ServerRpc]
-    public void NotifyPlayerTransformedServerRpc(bool becameZombie)
+    public void NotifyPlayerTransformedServerRpc()
     {
-        Debug.Log("NotifyPlayerTransformedServerRpc llamado");
+        //Debug.Log("NotifyPlayerTransformedServerRpc llamado");
 
 
-        if (becameZombie)
-        {
-            humanNumber.Value--;
-            zombieNumber.Value++;
-            Debug.Log($"Se transform  en zombie. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
-        }
-        else
-        {
-            humanNumber.Value++;
-            zombieNumber.Value--;
-            Debug.Log($"Se transform  en humano. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
-        }
+        //if (becameZombie)
+        //{
+        //    humanNumber.Value--;
+        //    zombieNumber.Value++;
+        //    Debug.Log($"Se transform  en zombie. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
+        //}
 
         CheckWinConditionsServerRpc();
     }
