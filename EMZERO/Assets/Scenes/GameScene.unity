@@ -1962,8 +1962,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   playerPrefab: {fileID: 8947290730586645348, guid: cb4f2926f9ddb634fb81430a923273a9, type: 3}
   zombiePrefab: {fileID: 4242402687381181303, guid: 42625083221c5f4428e9a69d2f9deef2, type: 3}
-  numberOfHumans: 2
-  numberOfZombies: 2
   gameMode: 1
   minutes: 1
   gameOverPanel: {fileID: 861340988}
@@ -2041,7 +2039,7 @@ MonoBehaviour:
   numberOfRooms: 4
   roomWidth: 9
   roomLength: 9
-  "\xEDtemsDensity": 20
+  itemsDensity: 20
   coinsDensity: 20
 --- !u!1 &1726941678
 GameObject:
