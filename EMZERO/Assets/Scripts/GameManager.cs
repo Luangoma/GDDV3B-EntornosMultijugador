@@ -226,24 +226,32 @@ public class GameManager : NetworkBehaviour
     public void SetTotalCoins(int coins)
     {
         totalCoins.Value = coins;
+        Debug.Log($"Total de monedas generadas en el nivel: {totalCoins.Value}");
+
     }
 
     public void ConvertHuman(NetworkObject p)
     {
         if (!IsServer) return;
-        //humanNumber.Value--;      // Esto ya lo hace el propio humano en el despawn
+        humanNumber.Value--;      // Esto ya lo hace el propio humano en el despawn
         // Destruir el humano
         // Guardarme sus coordenadas y rotacion
         Vector3 position = p.transform.position;
         Quaternion rotation = p.transform.rotation;
         ulong clientId = p.OwnerClientId;
+
         p.Despawn();
+
         // Crear el zombie
         GameObject zombie = Instantiate(zombiePrefab, position, rotation);
         zombie.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
 
         // Añadir a la cuenta de zombies
         zombieNumber.Value++;
+
+        Debug.Log($"Conversión completada. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
+
+        CheckWinConditionsServerRpc();
 
     }
 
@@ -310,46 +318,40 @@ public class GameManager : NetworkBehaviour
     [ServerRpc]
     private void CheckWinConditionsServerRpc()
     {
-        Debug.Log($"DENTRO DE LAS WC- Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
+        //if (isGameOver.Value) return; // No hacer nada si el juego ya terminó
 
+        Debug.Log($"Verificando condiciones - Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}, Monedas: {collectedCoins.Value}/{totalCoins.Value}");
 
         // Zombies ganan si no quedan humanos
         if (humanNumber.Value <= 0)
         {
-            EndGame(" Los Zombies ganan!");
-            Debug.Log("Zombies ganan");
-
+            EndGame("¡Los Zombies ganan!");
+            Debug.Log("WC humanos 0");
             return;
         }
 
-        // Verificar condiciones seg n el modo de juego
-        if (modo.Value == GameMode.Monedas)
+        // Verificar condiciones según el modo de juego
+        switch (modo.Value)
         {
-            int totalCoins = FindObjectOfType<LevelBuilder>().GetCoinsGenerated();
-            if (collectedCoins.Value >= totalCoins)
-                if (modo.Value == GameMode.Monedas)
+            case GameMode.Monedas:
+                if (collectedCoins.Value >= totalCoins.Value && totalCoins.Value > 0)
                 {
-                    LevelBuilder levelBuilder = FindObjectOfType<LevelBuilder>();
-                    if (levelBuilder == null)
-                    {
-                        Debug.LogError("LevelBuilder no encontrado!");
-                        return;
-                    }
+                    EndGame("¡Los Humanos ganan! Han recogido todas las monedas");
+                    Debug.Log("WC humanos monedas");
 
-                    totalCoins = levelBuilder.GetCoinsGenerated();
-                    Debug.Log($"Verificando monedas: {collectedCoins.Value}/{totalCoins} (Modo: {modo.Value})");
-
-                    if (collectedCoins.Value >= totalCoins && totalCoins > 0)
-                    {
-                        Debug.Log(" Condici n de victoria cumplida! Humanos ganan");
-                        EndGame(" Los Humanos ganan! Han recogido todas las monedas");
-                        return;
-                    }
                 }
-        }
-        else if (modo.Value == GameMode.Tiempo)
-        {
-            // La condici n de tiempo se maneja en Update
+                break;
+
+            case GameMode.Tiempo:
+                // La condición de tiempo se maneja en Update de LevelManager
+                // Cuando timeRemaining <= 0, humanos ganan
+                if (timeRemaining.Value <= 0)
+                {
+                    EndGame("¡Los Humanos ganan! Sobrevivieron el tiempo límite");
+                    Debug.Log("WC humanos tiempo");
+
+                }
+                break;
         }
     }
 

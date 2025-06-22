@@ -226,7 +226,8 @@ public class PlayerController : NetworkBehaviour
     {
         Rotation.OnValueChanged -= OnRotationChanged;
         Position.OnValueChanged -= OnPositionChanged;
-        if (isZombie)
+        
+        /*if (isZombie)
         {
             gameManager.zombieNumber.Value--;
         }
@@ -234,6 +235,7 @@ public class PlayerController : NetworkBehaviour
         {
             gameManager.humanNumber.Value--;
         }
+        */
     }
 
 
@@ -248,8 +250,12 @@ public class PlayerController : NetworkBehaviour
         if (!IsServer) return;
         if (!isZombie) // Solo los humanos pueden recoger monedas
         {
-            gameManager.collectedCoins.Value++;
+            //gameManager.collectedCoins.Value++;
             UpdateCoinUI(gameManager.collectedCoins.Value);
+
+            Debug.Log($"Jugador {OwnerClientId} recolectó moneda (local)");
+            RequestCoinCollectionServerRpc();
+            Debug.Log($"Se envió petición al servidor desde {OwnerClientId}");
         }
     }
 
@@ -265,8 +271,8 @@ public class PlayerController : NetworkBehaviour
     private void RequestCoinCollectionServerRpc()
     {
         // Solo el servidor puede modificar este valor
-        gameManager.collectedCoins.Value++;
-        Debug.Log($"Monedas recolectadas (local): {gameManager.collectedCoins.Value++}");
+        //gameManager.collectedCoins.Value++;
+        Debug.Log($"Monedas recolectadas (local): {gameManager.collectedCoins.Value}");
 
         // Notificar al GameManager
         GameManager.Instance?.NotifyCoinCollectedServerRpc();
