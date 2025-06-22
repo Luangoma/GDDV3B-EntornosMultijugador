@@ -127,7 +127,7 @@ public class PlayerController : NetworkBehaviour
         }
 
         gameManager.collectedCoins.OnValueChanged += OnCoinsIncreased;
-        gameManager.timeRemaining.OnValueChanged += OnTimeChanged;
+        //gameManager.timeRemaining.OnValueChanged += OnTimeChanged;
         playerName.OnValueChanged += OnPlayerNameChanged;
     }
 
@@ -138,10 +138,10 @@ public class PlayerController : NetworkBehaviour
     }
     
     // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
-    private void OnTimeChanged(float previousValue, float newValue)
+    /*private void OnTimeChanged(float previousValue, float newValue)
     {
         UpdateTimeUI(newValue);
-    }
+    }*/
 
     // Este metodo se dispara para cada cliente en el momento de que la networkVariable Position cambie
     private void OnPositionChanged(Vector3 oldPos, Vector3 newPos)
@@ -215,7 +215,7 @@ public class PlayerController : NetworkBehaviour
                 }
             }
             UpdateCoinUI(gameManager.collectedCoins.Value);
-            UpdateTimeUI(gameManager.timeRemaining.Value);
+            //UpdateTimeUI(gameManager.timeRemaining.Value);
         }
     }
     private void LateUpdate()
@@ -332,12 +332,15 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
-    public void UpdateTimeUI(float timeCount) {
+    /*public void UpdateTimeUI(float timeCount) {
         if (timeText != null)
         {
-            timeText.text = $"{timeCount.ToString("F1")}";
+            // Convertir a minutos y segundos
+            int minutes = Mathf.FloorToInt(timeCount / 60f);
+            int seconds = Mathf.FloorToInt(timeCount % 60f);
+            timeText.text = $"{minutes:00}:{seconds:00}";
         }
-    }
+    }*/
 
 
     // Actualizar del movimiento del personaje al servidor en tiempo real

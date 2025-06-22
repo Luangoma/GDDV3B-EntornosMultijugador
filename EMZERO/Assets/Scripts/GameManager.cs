@@ -14,6 +14,8 @@ public class GameManager : NetworkBehaviour
     private Dictionary<ulong, bool> readyStates = new Dictionary<ulong, bool>();
     public Dictionary<ulong, string> backupPlayerNames = new Dictionary<ulong, string>();
     private bool canJoin = true;
+    private bool timeExpired = false;
+
 
     const int MINSEED = 0;
     const int MAXSEED = 25000;
@@ -59,7 +61,7 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> zombieNumber = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> totalCoins = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> collectedCoins = new(default, rpEveryone, wpServer);
-    public NetworkVariable<float> timeRemaining = new(default, rpEveryone, wpServer);
+    //public NetworkVariable<float> timeRemaining = new(default, rpEveryone, wpServer);
     // Data builder
     public NetworkVariable<int> mapSeed = new(default, rpEveryone, wpServer);
     #endregion
@@ -177,6 +179,11 @@ public class GameManager : NetworkBehaviour
                 backupPlayerNames[clientId] = uniqueIdGenerator.GenerateUniqueID(); // Genera el nombre, que luego cada player lo asigna a su network variable en playercontroller
                 SpawnClient(clientId, spawnPoints[aux], prefab);
 
+                StartTimeClientRpc(tiempo.Value * 60, new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+                });
+
                 aux++;
             }
 
@@ -184,6 +191,7 @@ public class GameManager : NetworkBehaviour
         }
         nm.SceneManager.OnLoadEventCompleted -= OnNetworkSceneLoaded;
     }
+
     // Llamado por el cliente al pulsar "Listo"
     [ServerRpc(RequireOwnership = false)]
     public void SetReadyServerRpc(ulong localClientId, ServerRpcParams rpcParams = default)
@@ -298,17 +306,40 @@ public class GameManager : NetworkBehaviour
         CheckWinConditionsServerRpc();
     }
 
+    [ServerRpc(RequireOwnership = false)]
+    public void NotifyTimeExpiredServerRpc(ServerRpcParams rpcParams = default)
+    {
+        if (timeExpired || isGameOver.Value) return;
+
+        timeExpired = true;
+        isGameOver.Value = true;
+        EndGame("¡Los Humanos ganan! Sobrevivieron el tiempo límite");
+
+    }
+
+    [ClientRpc]
+    private void StartTimeClientRpc(int durationSeconds, ClientRpcParams clientRpcParams = default)
+    {
+        if (IsClient)
+        {
+            var levelManager = FindObjectOfType<LevelManager>();
+            if (levelManager != null)
+            {
+                levelManager.StartLocalCountdown(durationSeconds);
+            }
+        }
+    }
 
 
     [ServerRpc]
     private void CheckWinConditionsServerRpc()
     {
-        //if (isGameOver.Value) return; // No hacer nada si el juego ya terminó
+        if (isGameOver.Value) return; // No hacer nada si el juego ya terminó
 
         Debug.Log($"Verificando condiciones - Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}, Monedas: {collectedCoins.Value}/{totalCoins.Value}");
 
         // Zombies ganan si no quedan humanos
-        if (humanNumber.Value <= 0)
+        if (humanNumber.Value <= 0 && !timeExpired)
         {
             EndGame("¡Los Zombies ganan!");
             Debug.Log("WC humanos 0");
@@ -330,7 +361,7 @@ public class GameManager : NetworkBehaviour
             case GameMode.Tiempo:
                 // La condición de tiempo se maneja en Update de LevelManager
                 // Cuando timeRemaining <= 0, humanos ganan
-                if (timeRemaining.Value <= 0)
+                if (timeExpired)
                 {
                     EndGame("¡Los Humanos ganan! Sobrevivieron el tiempo límite");
                     Debug.Log("WC humanos tiempo");

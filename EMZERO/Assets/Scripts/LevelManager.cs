@@ -35,6 +35,7 @@ public class LevelManager : MonoBehaviour
     private TextMeshProUGUI humansText;
     private TextMeshProUGUI zombiesText;
     private TextMeshProUGUI gameModeText;
+    private TextMeshProUGUI timeText;
 
     public string PlayerPrefabName => playerPrefab.name;
     public string ZombiePrefabName => zombiePrefab.name;
@@ -46,6 +47,10 @@ public class LevelManager : MonoBehaviour
     private PlayerController playerController;
 
     private bool isGameOver = false;
+
+    private float localTimeRemaining;
+    private bool isCountdownRunning;
+    private bool hasNotifiedServer;
 
     public GameObject gameOverPanel; // Asigna el panel desde el inspector
 
@@ -121,7 +126,7 @@ public class LevelManager : MonoBehaviour
             }
         }
 
-        gm.timeRemaining.Value = minutes * 60;
+        //gm.timeRemaining.Value = minutes * 60;
         gm.zombieNumber.OnValueChanged += OnPlayersChange;
         gm.humanNumber.OnValueChanged += OnPlayersChange;
         
@@ -140,16 +145,37 @@ public class LevelManager : MonoBehaviour
     }
     private void Update()
     {
+
+        if (isCountdownRunning && !hasNotifiedServer)
+        {
+            localTimeRemaining = Mathf.Max(0, localTimeRemaining - Time.deltaTime);
+            UpdateTimeUI();
+
+            if (localTimeRemaining <= 0 && !hasNotifiedServer)
+            {
+                localTimeRemaining = 0;
+                isCountdownRunning = false;
+                hasNotifiedServer = true;
+
+                if (GameManager.Instance != null)
+                {
+                    GameManager.Instance.NotifyTimeExpiredServerRpc();
+                }
+                UpdateTimeUI();
+            }
+        }
+
+        /*
         if (gameMode == GameMode.Tiempo)
         {
             // L�gica para el modo de juego basado en tiempo
-            HandleTimeLimitedGameMode();
+            //HandleTimeLimitedGameMode();
         }
         else if (gameMode == GameMode.Monedas)
         {
             // L�gica para el modo de juego basado en monedas
             //HandleCoinBasedGameMode();
-        }
+        }*/
 
         if (Input.GetKeyDown(KeyCode.Z)) // Presiona "Z" para convertirte en Zombie
         {
@@ -347,6 +373,7 @@ public class LevelManager : MonoBehaviour
 
     #region Modo de juego
 
+    /*
     private void HandleTimeLimitedGameMode()
     {
         // Implementar la l gica para el modo de juego basado en tiempo
@@ -375,6 +402,43 @@ public class LevelManager : MonoBehaviour
             GameOver(" Se acab  el tiempo, los Humanos han sobrevivido!");
         }
 
+    }
+    */
+
+    public void StartLocalCountdown(int durationSeconds)
+    {
+        localTimeRemaining = durationSeconds;
+        isCountdownRunning = true;
+        hasNotifiedServer = false;
+        InitializeTimeUI();
+    }
+
+    private void InitializeTimeUI()
+    {
+        GameObject canvas = GameObject.Find("CanvasPlayer");
+        if (canvas != null)
+        {
+            Transform panel = canvas.transform.Find("PanelHud");
+            if (panel != null)
+            {
+                Transform timeTextTransform = panel.Find("TimeValue");
+                if (timeTextTransform != null)
+                {
+                    timeText = timeTextTransform.GetComponent<TextMeshProUGUI>();
+                    UpdateTimeUI();
+                }
+            }
+        }
+    }
+
+    private void UpdateTimeUI()
+    {
+        if (timeText != null)
+        {
+            int minutes = Mathf.FloorToInt(localTimeRemaining / 60);
+            int seconds = Mathf.FloorToInt(localTimeRemaining % 60);
+            timeText.text = $"{minutes:00}:{seconds:00}";
+        }
     }
 
     private void ShowGameOverPanel()
@@ -428,7 +492,3 @@ public class LevelManager : MonoBehaviour
     #endregion
 
 }
-
-
-
-
