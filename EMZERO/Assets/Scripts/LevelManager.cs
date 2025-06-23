@@ -193,19 +193,19 @@ public class LevelManager : MonoBehaviour
                 Debug.Log("El jugador actual no es un humano.");
             }
         }
-        else if (Input.GetKeyDown(KeyCode.H)) // Presiona "H" para convertirte en Humano
-        {
-            // Comprobar si el jugador actual est� usando el prefab de zombie
-            GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
-            if (currentPlayer != null && currentPlayer.name.Contains(zombiePrefab.name))
-            {
-                ChangeToHuman();
-            }
-            else
-            {
-                Debug.Log("El jugador actual no es un zombie.");
-            }
-        }
+        //else if (Input.GetKeyDown(KeyCode.H)) // Presiona "H" para convertirte en Humano
+        //{
+        //    // Comprobar si el jugador actual est� usando el prefab de zombie
+        //    GameObject currentPlayer = GameObject.FindGameObjectWithTag("Player");
+        //    if (currentPlayer != null && currentPlayer.name.Contains(zombiePrefab.name))
+        //    {
+        //        ChangeToHuman();
+        //    }
+        //    else
+        //    {
+        //        Debug.Log("El jugador actual no es un zombie.");
+        //    }
+        //}
         //UpdateTeamUI();
 
         if (isGameOver)
