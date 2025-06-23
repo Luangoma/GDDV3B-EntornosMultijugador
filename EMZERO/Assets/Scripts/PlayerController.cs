@@ -21,6 +21,7 @@ public class PlayerController : NetworkBehaviour
     [Header("Character settings")]
     public bool isZombie = false; // A adir una propiedad para el estado del jugador
     public string uniqueID; // A adir una propiedad para el identificador  nico
+    public NetworkVariable<bool> WasOriginallyZombie = new NetworkVariable<bool>(false);
 
     [Header("Movement Settings")]
     public float moveSpeed = 5f;           // Velocidad de movimiento
@@ -52,6 +53,10 @@ public class PlayerController : NetworkBehaviour
         gameManager = GameManager.Instance;
         if (IsOwner)
         {
+            WasOriginallyZombie.Value = isZombie;
+            Debug.Log($"Player {OwnerClientId} spawned - isZombie: {isZombie}, WasOriginallyZombie: {WasOriginallyZombie.Value}");
+
+
             // Asigna la c mara principal a este jugador local
             //Camera mainCamera = Camera.main;
             //if (mainCamera != null)

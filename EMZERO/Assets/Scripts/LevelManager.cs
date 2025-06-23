@@ -55,6 +55,8 @@ public class LevelManager : MonoBehaviour
 
     public GameObject gameOverPanel; // Asigna el panel desde el inspector
 
+
+
     // Un tipo de variable especial, del cual no se puede leer hasta que el servidor lo actualice
     public NetworkVariable<int> playerNumber = new NetworkVariable<int>(
         0,
@@ -479,17 +481,26 @@ public class LevelManager : MonoBehaviour
 
     public void ShowGameOverPanel(string message)
     {
-        if (gameOverPanel != null)
+        if (gameOverPanel != null && !gameOverPanelShown)
         {
-            Time.timeScale = 0f;
-            gameOverPanel.SetActive(true);
+            gameOverPanelShown = true;
 
-            // Buscar el texto donde mostrar el mensaje
+            // Activar/desactivar elementos según el tipo de mensaje
+            bool isVictory = message.Contains("VICTORIA");
+            Transform victoryElements = gameOverPanel.transform.Find("VictoryElements");
+            Transform defeatElements = gameOverPanel.transform.Find("DefeatElements");
+
+            if (victoryElements != null) victoryElements.gameObject.SetActive(isVictory);
+            if (defeatElements != null) defeatElements.gameObject.SetActive(!isVictory);
+
             TextMeshProUGUI resultText = gameOverPanel.GetComponentInChildren<TextMeshProUGUI>();
             if (resultText != null)
             {
                 resultText.text = message;
             }
+
+            Time.timeScale = 0f;
+            gameOverPanel.SetActive(true);
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
