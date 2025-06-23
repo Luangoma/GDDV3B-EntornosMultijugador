@@ -473,17 +473,19 @@ public class LevelManager : MonoBehaviour
         SceneManager.LoadScene("MenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
     }
 
-    public void GameOver(string message)
-    {
-        isGameOver = true;
-        ShowGameOverPanel(message);
-    }
+    // Alguien puso esto y no se usa
+    //public void GameOver(string message)
+    //{
+    //    isGameOver = true;
+    //    ShowGameOverPanel(message);
+    //}
 
     public void ShowGameOverPanel(string message)
     {
         if (gameOverPanel != null && !gameOverPanelShown)
         {
-            gameOverPanelShown = true;
+            //gameOverPanelShown = true;
+            Debug.Log("Mostrando panel de Game Over con mensaje: " + message);
 
             // Activar/desactivar elementos según el tipo de mensaje
             bool isVictory = message.Contains("VICTORIA");

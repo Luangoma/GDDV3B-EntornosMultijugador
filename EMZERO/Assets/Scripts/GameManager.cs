@@ -152,13 +152,6 @@ public class GameManager : NetworkBehaviour
             int idx = GetClientIndex(clientId);
             readyStates.Remove(clientId);
         }
-
-        if (IsServer && !isGameOver.Value)
-        {
-            // Verificar si alguien abandonó durante la partida
-            CheckWinConditionsServerRpc();
-        }
-
     }
     private int GetClientIndex(ulong clientId)
     {
@@ -343,6 +336,7 @@ public class GameManager : NetworkBehaviour
         //    Debug.Log($"Se transform  en zombie. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
         //}
 
+        // variable condicion desconexion
         CheckWinConditionsServerRpc();
     }
 
@@ -352,8 +346,10 @@ public class GameManager : NetworkBehaviour
         if (timeExpired || isGameOver.Value) return;
 
         timeExpired = true;
-        isGameOver.Value = true;
-        EndGame(VictoryType.HumanVictory, "¡Los Humanos ganan! Sobrevivieron el tiempo límite");
+
+        //isGameOver.Value = true;
+        //EndGame(VictoryType.HumanVictory, "¡Los Humanos ganan! Sobrevivieron el tiempo límite");
+        CheckWinConditionsServerRpc();
     }
 
     [ClientRpc]
