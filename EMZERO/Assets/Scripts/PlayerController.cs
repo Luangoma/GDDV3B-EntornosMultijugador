@@ -129,6 +129,7 @@ public class PlayerController : NetworkBehaviour
         gameManager.collectedCoins.OnValueChanged += OnCoinsIncreased;
         //gameManager.timeRemaining.OnValueChanged += OnTimeChanged;
         playerName.OnValueChanged += OnPlayerNameChanged;
+        CanvasStart();
     }
 
     // Esto seguramente de valores incorrectos si varios cogen a la vez (creo)
@@ -179,7 +180,7 @@ public class PlayerController : NetworkBehaviour
         // Todo esto solo funciona en la escena de la partida, porque el canvas no existe en el menu
         // -----------------------------------------------------------------------------------------
         // Buscar el objeto "CanvasPlayer" en la escena
-        CanvasStart();
+        // CanvasStart(); // Lo he movido al propio onNetworkSpawn porque creo que puede evitar errores de orden de ejecucion pero aqui tambien funciona
 
     }
 
@@ -278,7 +279,8 @@ public class PlayerController : NetworkBehaviour
     {
         Rotation.OnValueChanged -= OnRotationChanged;
         Position.OnValueChanged -= OnPositionChanged;
-        
+        gameManager.collectedCoins.OnValueChanged -= OnCoinsIncreased;
+
         if (isZombie)
         {
             gameManager.zombieNumber.Value--;
@@ -312,7 +314,7 @@ public class PlayerController : NetworkBehaviour
     }
 
 
-    [ServerRpc]
+    [ServerRpc (RequireOwnership = false)]  // Cualquier humano puede solicitar recolectar monedas
     private void RequestCoinCollectionServerRpc()
     {
         // Solo el servidor puede modificar este valor
@@ -320,7 +322,8 @@ public class PlayerController : NetworkBehaviour
         Debug.Log($"Monedas recolectadas (local): {gameManager.collectedCoins.Value}");
 
         // Notificar al GameManager
-        GameManager.Instance?.NotifyCoinCollectedServerRpc();
+        gameManager.NotifyCoinCollectedServerRpc();
+        //GameManager.Instance?.NotifyCoinCollectedServerRpc();
     }
 
     // Llamado cuando la variable coins ha sido modificada en el servidor
