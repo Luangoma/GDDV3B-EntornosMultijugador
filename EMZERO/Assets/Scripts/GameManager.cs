@@ -23,7 +23,7 @@ public class GameManager : NetworkBehaviour
     private UniqueIdGenerator uniqueIdGenerator;
     private int initialPlayerCount;
 
-    //variable ultimo zombie
+    private ulong? lastConvertedHumanId = null;
 
     #region Statics
     public static GameManager Instance { get; private set; }
@@ -272,9 +272,16 @@ public class GameManager : NetworkBehaviour
         // Guardarme sus coordenadas y rotacion
 
 
+        Debug.Log("ConvertHuman iniciado - Jugador: " + p.OwnerClientId);
+
+
         PlayerController humanController = p.GetComponent<PlayerController>();
         if (humanController != null && !humanController.isZombie)
-        {
+        {            
+            //Debug.Log($"Convirtiendo humano {p.OwnerClientId} a zombie...");
+            lastConvertedHumanId = p.OwnerClientId;
+            //Debug.Log($"Último humano : {lastConvertedHumanId}");
+
             Vector3 position = p.transform.position;
             Quaternion rotation = p.transform.rotation;
             ulong clientId = p.OwnerClientId;
@@ -289,8 +296,15 @@ public class GameManager : NetworkBehaviour
             {
                 zombieController.isZombie = true;
                 zombieController.WasOriginallyZombie.Value = false;
-                Debug.Log($"Nuevo zombie {clientId} - WasOriginallyZombie: {zombieController.WasOriginallyZombie.Value}");
+                //Debug.Log($"Nuevo zombie {clientId} - WasOriginallyZombie: {zombieController.WasOriginallyZombie.Value}");
+
+                NotifyLastClientRpc(clientId, new ClientRpcParams
+                {
+                    Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+                });
             }
+
+            Debug.Log($"Jugador {p.OwnerClientId} convertido. Estado actual - isZombie: {zombieController.isZombie}, WasOriginallyZombie: {zombieController.WasOriginallyZombie.Value}");
 
             zombieNumber.Value++;
             CheckWinConditionsServerRpc();
@@ -324,7 +338,7 @@ public class GameManager : NetworkBehaviour
     }
 
     [ServerRpc]
-    public void NotifyPlayerTransformedServerRpc()
+    public void NotifyPlayerTransformedServerRpc(ServerRpcParams rpcParams = default)
     {
         //Debug.Log("NotifyPlayerTransformedServerRpc llamado");
 
@@ -339,6 +353,17 @@ public class GameManager : NetworkBehaviour
         // variable condicion desconexion
         CheckWinConditionsServerRpc();
     }
+
+    [ClientRpc]
+    private void NotifyLastClientRpc(ulong convertedPlayerId, ClientRpcParams clientRpcParams = default)
+    {
+        if (NetworkManager.Singleton.LocalClientId == convertedPlayerId)
+        {
+            Debug.Log("¡Has sido convertido en zombie!");
+            // Aquí puedes añadir efectos visuales/sonidos
+        }
+    }
+
 
     [ServerRpc(RequireOwnership = false)]
     public void NotifyTimeExpiredServerRpc(ServerRpcParams rpcParams = default)
@@ -379,59 +404,17 @@ public class GameManager : NetworkBehaviour
     {
         if (isGameOver.Value) return;
 
-        // Verificar abandono primero (comparar con número inicial de jugadores)
+        // Verificar abandono
         if (nm.ConnectedClientsIds.Count < initialPlayerCount)
         {
-            EndGame(VictoryType.GameAbandoned);
+            EndGameForAll(VictoryType.GameAbandoned);
             return;
         }
 
         // Zombies ganan si no quedan humanos
         if (humanNumber.Value <= 0)
         {
-            isGameOver.Value = true;
-
-            // Primero identificar al último humano (si existe)
-            PlayerController lastHuman = null;
-            foreach (var client in nm.ConnectedClients)
-            {
-                var player = client.Value.PlayerObject.GetComponent<PlayerController>();
-                if (!player.isZombie)
-                {
-                    lastHuman = player;
-                    break;
-                }
-            }
-
-            // Enviar mensajes
-            foreach (var client in nm.ConnectedClients)
-            {
-                var player = client.Value.PlayerObject.GetComponent<PlayerController>();
-
-                if (player == lastHuman)
-                {
-                    EndGame(VictoryType.Loss, "¡Derrota! Eres el último humano en ser convertido", client.Key);
-                }
-                else if (player.isZombie)
-                {
-                    Debug.Log($"Jugador {client.Key} - isZombie: {player.isZombie}, OriginallyZombie: {player.WasOriginallyZombie.Value}");
-
-                    if (player.WasOriginallyZombie.Value)
-                    {
-                        Debug.Log($"Jugador {client.Key} es zombie original - VICTORIA TOTAL");
-                        EndGame(VictoryType.ZombieVictory,
-                              "¡VICTORIA TOTAL! Eliminaste a todos los humanos",
-                              client.Key);
-                    }
-                    else
-                    {
-                        Debug.Log($"Jugador {client.Key} es zombie convertido - VICTORIA PARCIAL");
-                        EndGame(VictoryType.ZombieVictory,
-                              "¡VICTORIA PARCIAL! Fuiste convertido pero tu equipo ganó",
-                              client.Key);
-                    }
-                }
-            }
+            DetermineZombieVictory();
             return;
         }
 
@@ -441,120 +424,135 @@ public class GameManager : NetworkBehaviour
             case GameMode.Monedas:
                 if (collectedCoins.Value >= totalCoins.Value && totalCoins.Value > 0)
                 {
-                    isGameOver.Value = true;
-                    foreach (var client in nm.ConnectedClients)
-                    {
-                        var player = client.Value.PlayerObject.GetComponent<PlayerController>();
-                        if (!player.isZombie)
-                        {
-                            // Humanos ganan
-                            EndGame(VictoryType.HumanVictory,
-                                   "¡VICTORIA! Han recogido todas las monedas",
-                                   client.Key);
-                        }
-                        else
-                        {
-                            // Zombies pierden
-                            EndGame(VictoryType.Loss,
-                                   "¡DERROTA! Los humanos recogieron todas las monedas",
-                                   client.Key);
-                        }
-                    }
+                    DetermineCoinVictory();
                 }
                 break;
 
             case GameMode.Tiempo:
                 if (timeExpired)
                 {
-                    bool humansSurvived = humanNumber.Value > 0;
-
-                    foreach (var client in nm.ConnectedClients)
-                    {
-                        var player = client.Value.PlayerObject.GetComponent<PlayerController>();
-                        if (!player.isZombie)
-                        {
-                            EndGame(humansSurvived ? VictoryType.HumanVictory : VictoryType.Loss,
-                                humansSurvived ? "¡Sobrevivieron el tiempo límite!" : "¡No lograron sobrevivir!",
-                                client.Key);
-                        }
-                        else
-                        {
-                            EndGame(humansSurvived ? VictoryType.Loss : VictoryType.ZombieVictory,
-                                "",
-                                client.Key);
-                        }
-                    }
+                    DetermineTimeVictory();
                 }
                 break;
         }
     }
 
+    private void DetermineZombieVictory()
+    {
+        isGameOver.Value = true;
+
+        // Lista para evitar duplicados
+        List<ulong> playersNotified = new List<ulong>();
+
+        // Notificar primero al último humano convertido (si existe)
+        if (lastConvertedHumanId.HasValue)
+        {
+            //Debug.Log($"Procesando último humano convertido: {lastConvertedHumanId}");
+            if (lastConvertedHumanId != null)
+            {
+                
+                    //Debug.Log($"ENVIANDO DERROTA al último humano: {lastConvertedHumanId.Value}");
+                    EndGameForPlayer(VictoryType.Loss,
+                        "¡Derrota! Fuiste el último humano en ser convertido",
+                        lastConvertedHumanId.Value);
+
+                    playersNotified.Add(lastConvertedHumanId.Value);
+                
+            }
+        }
+
+        //Notificar a los otros zombies (excluyendo al ya notificado)
+        foreach (var client in nm.ConnectedClients)
+        {
+            if (playersNotified.Contains(client.Key)) continue;
+
+            var player = client.Value.PlayerObject.GetComponent<PlayerController>();
+
+            if (player.isZombie)
+            {
+                string message = player.WasOriginallyZombie.Value
+                    ? "¡VICTORIA TOTAL! Eliminaste a todos los humanos"
+                    : "¡VICTORIA PARCIAL! Fuiste convertido pero tu equipo ganó";
+
+                //Debug.Log($"Enviando victoria a zombie {client.Key}: {message}");
+                EndGameForPlayer(VictoryType.ZombieVictory, message, client.Key);
+            }
+        }
+    }
+
+    private void DetermineCoinVictory()
+    {
+        isGameOver.Value = true;
+
+        foreach (var client in nm.ConnectedClients)
+        {
+            var player = client.Value.PlayerObject.GetComponent<PlayerController>();
+            string message = player.isZombie
+                ? "¡DERROTA! Los humanos recogieron todas las monedas"
+                : "¡VICTORIA! Han recogido todas las monedas";
+
+            VictoryType victoryType = player.isZombie ? VictoryType.Loss : VictoryType.HumanVictory;
+            EndGameForPlayer(victoryType, message, client.Key);
+        }
+    }
+
+    private void DetermineTimeVictory()
+    {
+        isGameOver.Value = true;
+        bool humansSurvived = humanNumber.Value > 0;
+
+        foreach (var client in nm.ConnectedClients)
+        {
+            var player = client.Value.PlayerObject.GetComponent<PlayerController>();
+
+            if (player.isZombie)
+            {
+                string message = humansSurvived ? "" : "¡VICTORIA! Todos los humanos fueron convertidos";
+                VictoryType victoryType = humansSurvived ? VictoryType.Loss : VictoryType.ZombieVictory;
+                EndGameForPlayer(victoryType, message, client.Key);
+            }
+            else
+            {
+                string message = humansSurvived
+                    ? "¡VICTORIA! Sobrevivieron el tiempo límite"
+                    : "¡DERROTA! No lograron sobrevivir";
+
+                VictoryType victoryType = humansSurvived ? VictoryType.HumanVictory : VictoryType.Loss;
+                EndGameForPlayer(victoryType, message, client.Key);
+            }
+        }
+    }
+
+    private void EndGameForAll(VictoryType victoryType, string message = "")
+    {
+        isGameOver.Value = true;
+        EndGameClientRpc(victoryType, new FixedString128Bytes(message));
+    }
+
+    private void EndGameForPlayer(VictoryType victoryType, string message, ulong clientId)
+    {
+        Debug.Log($"PREPARANDO MENSAJE PARA {clientId}: {message}");
+
+        ClientRpcParams clientRpcParams = new ClientRpcParams
+        {
+            Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
+        };
+        EndGameClientRpc(victoryType, new FixedString128Bytes(message), clientRpcParams);
+    }
+
     [ClientRpc]
-    private void EndGameClientRpc(VictoryType victoryType, FixedString128Bytes additionalMessage, ClientRpcParams clientRpcParams = default)
+    private void EndGameClientRpc(VictoryType victoryType, FixedString128Bytes message, ClientRpcParams clientRpcParams = default)
     {
         // Obtener el PlayerController local
         PlayerController pc = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject()?.GetComponent<PlayerController>();
         if (pc == null) return;
 
-        string message = additionalMessage.ToString();
+        string finalMessage = message.ToString();
 
-        // Si ya hay un mensaje específico (como para el último humano), usarlo
-        if (!string.IsNullOrEmpty(message))
-        {
-            FindObjectOfType<LevelManager>()?.ShowGameOverPanel(message);
-            return;
-        }
-
-        // Determinar mensaje basado en el tipo de victoria y el rol del jugador
-        switch (victoryType)
-        {
-            case VictoryType.ZombieVictory:
-                if (pc.WasOriginallyZombie.Value)
-                {
-                    message = "¡VICTORIA TOTAL ZOMBIS!\nEliminaste a todos los humanos";
-                }
-                else if (pc.isZombie)
-                {
-                    message = "¡VICTORIA PARCIAL ZOMBIS!\nFuiste convertido pero tu equipo ganó";
-                }
-                break;
-
-            case VictoryType.HumanVictory:
-                message = !pc.isZombie ?
-               "¡VICTORIA HUMANOS!\n" + additionalMessage.ToString() :
-               "¡DERROTA!\n" + additionalMessage.ToString();
-                break;
-
-            case VictoryType.Loss:
-                message = "¡DERROTA!\n" + additionalMessage.ToString();
-                break;
-
-            case VictoryType.GameAbandoned:
-                message = "PARTIDA CANCELADA\nUn jugador abandonó el juego";
-                break;
-        }
-
-        if (!string.IsNullOrEmpty(message))
-        {
-            FindObjectOfType<LevelManager>()?.ShowGameOverPanel(message);
-        }
+        // Mostrar el panel de fin de juego
+        FindObjectOfType<LevelManager>()?.ShowGameOverPanel(finalMessage);
     }
 
-    public void EndGame(VictoryType victoryType, string additionalMessage = "", ulong clientId = 0)
-    {
-        isGameOver.Value = true;
-        if (clientId == 0) // Notificar a todos
-        {
-            EndGameClientRpc(victoryType, new FixedString128Bytes(additionalMessage));
-        }
-        else // Notificar solo a un cliente
-        {
-            ClientRpcParams clientRpcParams = new ClientRpcParams
-            {
-                Send = new ClientRpcSendParams { TargetClientIds = new[] { clientId } }
-            };
-            EndGameClientRpc(victoryType, new FixedString128Bytes(additionalMessage), clientRpcParams);
-        }
-    }
+
     #endregion
 }
