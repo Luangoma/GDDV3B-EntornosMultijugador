@@ -51,6 +51,7 @@ public class LevelManager : MonoBehaviour
     private float localTimeRemaining;
     private bool isCountdownRunning;
     private bool hasNotifiedServer;
+    private bool gameOverPanelShown = false;
 
     public GameObject gameOverPanel; // Asigna el panel desde el inspector
 
@@ -208,9 +209,10 @@ public class LevelManager : MonoBehaviour
         //}
         //UpdateTeamUI();
 
-        if (isGameOver)
+        if (isGameOver && !gameOverPanelShown)
         {
             ShowGameOverPanel();
+            gameOverPanelShown = true;
         }
     }
 
