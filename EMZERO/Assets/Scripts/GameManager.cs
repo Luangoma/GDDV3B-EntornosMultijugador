@@ -15,8 +15,6 @@ public class GameManager : NetworkBehaviour
     public Dictionary<ulong, string> backupPlayerNames = new Dictionary<ulong, string>();
     private bool canJoin = true;
     private bool timeExpired = false;
-
-
     const int MINSEED = 0;
     const int MAXSEED = 25000;
     private List<Vector3> spawnPoints; // Centros de las habitaciones - las saca del level builder
@@ -61,7 +59,6 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> zombieNumber = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> totalCoins = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> collectedCoins = new(default, rpEveryone, wpServer);
-    //public NetworkVariable<float> timeRemaining = new(default, rpEveryone, wpServer);
     // Data builder
     public NetworkVariable<int> mapSeed = new(default, rpEveryone, wpServer);
     #endregion
@@ -80,7 +77,7 @@ public class GameManager : NetworkBehaviour
     }
     public void Start()
     {
-        densidad.Value = 5f;
+        densidad.Value = -5f;
         tiempo.Value = 5;
         nm = NetworkManager.Singleton;
         uniqueIdGenerator = new UniqueIdGenerator();
@@ -116,6 +113,16 @@ public class GameManager : NetworkBehaviour
         }
     }
     #endregion
+    #region Other methods
+    public void ResetConvinientData()
+    {
+        collectedCoins.Value = 0;
+        if (nm.IsHost)
+        {
+            mapSeed.Value = UnityEngine.Random.Range(MINSEED, MAXSEED);
+            //foreach (var item in readyStates.Keys) { readyStates[item] = false; }
+        }
+    }
     private void HandleClientConnected(ulong clientId)
     {
         if (!IsServer || canJoin) return;
@@ -382,5 +389,5 @@ public class GameManager : NetworkBehaviour
         isGameOver.Value = true;
         EndGameClientRpc(message);
     }
-
+    #endregion
 }

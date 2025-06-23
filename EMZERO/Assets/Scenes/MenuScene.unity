@@ -2035,6 +2035,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   humanPrefab: {fileID: 8947290730586645348, guid: cb4f2926f9ddb634fb81430a923273a9, type: 3}
   zombiePrefab: {fileID: 4242402687381181303, guid: 42625083221c5f4428e9a69d2f9deef2, type: 3}
+  isGameOver:
+    m_InternalValue: 0
   modo:
     m_InternalValue: 1
   tiempo:
@@ -2048,8 +2050,6 @@ MonoBehaviour:
   totalCoins:
     m_InternalValue: 0
   collectedCoins:
-    m_InternalValue: 0
-  timeRemaining:
     m_InternalValue: 0
   mapSeed:
     m_InternalValue: 0
@@ -7794,8 +7794,8 @@ SceneRoots:
   - {fileID: 735338617}
   - {fileID: 1420360708}
   - {fileID: 1971345240}
+  - {fileID: 728147803}
   - {fileID: 914551819}
   - {fileID: 1946941604}
   - {fileID: 1345675258}
-  - {fileID: 728147803}
   - {fileID: 1635398876}

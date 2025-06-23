@@ -51,9 +51,26 @@ public class MenuManager : MonoBehaviour
         }
         foreach (var item in atrasButtons) { item.onClick.AddListener(delegate { CambiarEscenaAtras(); }); }
         actual.gameObject.SetActive(true);
+        
+        ComprobarOnline();
     }
     #endregion  
     #region Navegacion entre pantallas
+    public void ComprobarOnline()
+    {
+        if (nm.IsConnectedClient)
+        {
+            CambiarEscenaAdelante();
+            if (nm.IsHost)
+            {
+                CambioPantalla(3);
+            }
+            else if (nm.IsClient)
+            {
+                CambioPantalla(4);
+            }
+        }
+    }
     public void StartGameFromMenuScene()
     {
         SceneManager.LoadScene("GameScene"); // Cambia "MainScene" por el nombre de tu escena principal
@@ -148,6 +165,7 @@ public class MenuManager : MonoBehaviour
                 //nm.StartServer();
                 break;
         }
+        nm.Shutdown();
     }
     #endregion
     public void QuitGame()

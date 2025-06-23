@@ -70,6 +70,9 @@ public class LevelManager : MonoBehaviour
     {
         Debug.Log("Despertando el nivel");
 
+        Cursor.lockState = CursorLockMode.Locked; // Bloquea el cursor
+        Cursor.visible = false; // Oculta el cursor
+
         // Obtener la referencia al UniqueIDGenerator
         uniqueIdGenerator = GetComponent<UniqueIdGenerator>();
 
@@ -457,8 +460,10 @@ public class LevelManager : MonoBehaviour
     public void ReturnToMainMenu()
     {
         // Gesti n del cursor
-        Cursor.lockState = CursorLockMode.Locked; // Bloquea el cursor
-        Cursor.visible = false; // Oculta el cursor
+        Cursor.lockState = CursorLockMode.None; // Bloquea el cursor
+        Cursor.visible = true; // Oculta el cursor
+
+        gm.ResetConvinientData();
 
         // Cargar la escena del men  principal
         SceneManager.LoadScene("MenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
