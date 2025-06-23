@@ -119,13 +119,38 @@ public class GameManager : NetworkBehaviour
     }
     #endregion
     #region Other methods
-    public void ResetConvinientData()
+    [ServerRpc]
+    public void ResetConvinientDataServerRpc()
     {
-        collectedCoins.Value = 0;
-        if (nm.IsHost)
+        if (nm.IsServer)
         {
+            collectedCoins.Value = 0;
             mapSeed.Value = UnityEngine.Random.Range(MINSEED, MAXSEED);
             //foreach (var item in readyStates.Keys) { readyStates[item] = false; }
+            readyStates.Clear(); // Limpiar los estados de ready para reiniciar el juego
+            // Reiniciar el contador de monedas y zombies
+            humanNumber.Value = 0;
+            zombieNumber.Value = 0;
+            timeExpired = false;
+            lastConvertedHumanId = null;
+            isGameOver.Value = false;
+                
+            // Despawnear a todos los jugadores
+            foreach (var clientId in nm.ConnectedClientsIds)
+            {
+                if (nm.SpawnManager.SpawnedObjects.TryGetValue(clientId, out NetworkObject obj))
+                {
+                    obj.Despawn();
+                }
+            }
+            // Despawnear objetos de red que no sean jugadores
+            foreach (var obj in FindObjectsOfType<NetworkObject>())
+            {
+                if (obj != null && obj.IsSpawned && obj.gameObject.tag != "Player")
+                {
+                    obj.Despawn();
+                }
+            }
         }
     }
     private void HandleClientConnected(ulong clientId)
@@ -529,6 +554,7 @@ public class GameManager : NetworkBehaviour
         EndGameClientRpc(victoryType, new FixedString128Bytes(message));
     }
 
+    
     private void EndGameForPlayer(VictoryType victoryType, string message, ulong clientId)
     {
         Debug.Log($"PREPARANDO MENSAJE PARA {clientId}: {message}");
@@ -540,7 +566,7 @@ public class GameManager : NetworkBehaviour
         EndGameClientRpc(victoryType, new FixedString128Bytes(message), clientRpcParams);
     }
 
-    [ClientRpc]
+    [ClientRpc(RequireOwnership = false)]
     private void EndGameClientRpc(VictoryType victoryType, FixedString128Bytes message, ClientRpcParams clientRpcParams = default)
     {
         // Obtener el PlayerController local
@@ -549,10 +575,63 @@ public class GameManager : NetworkBehaviour
 
         string finalMessage = message.ToString();
 
+        //TryDespawnServerRpc(pc.NetworkObjectId); // Intentar despawnear el jugador local
+
         // Mostrar el panel de fin de juego
         FindObjectOfType<LevelManager>()?.ShowGameOverPanel(finalMessage);
     }
 
 
+    //[ServerRpc(RequireOwnership = false)]
+    //public void TryDespawnServerRpc(ulong id)
+    //{
+    //    if (!IsServer) return;
+    //    if (nm.SpawnManager.SpawnedObjects.TryGetValue(id, out NetworkObject obj))
+    //    {
+    //        PlayerController player = obj.GetComponent<PlayerController>();
+    //        if (player != null && !player.isZombie)
+    //        {
+    //            //Convertir el humano
+    //            ConvertHuman(obj);
+    //        }
+    //    }
+
+
+    //}
+
     #endregion
+
+    //public void ResetGame()
+    //{
+    //    // Reset variables de estado
+    //    isGameOver.Value = false;
+    //    timeExpired = false;
+    //    lastConvertedHumanId = null;
+    //    collectedCoins.Value = 0;
+    //    // ... cualquier otra variable relevante
+
+    //    // Despawning de objetos de red (ejemplo para monedas y enemigos)
+    //    foreach (var obj in FindObjectsOfType<NetworkObject>())
+    //    {
+    //        // Evita despawnear jugadores si quieres mantenerlos
+    //        if (obj != null && obj.IsSpawned && obj.gameObject.tag != "Player")
+    //        {
+    //            obj.Despawn();
+    //        }
+    //    }
+
+    //    // Notifica a los clientes para que reseteen su estado local
+    //    ResetClientRpc();
+    //}
+
+    //[ClientRpc]
+    //private void ResetClientRpc()
+    //{
+    //    LevelManager levelManager = FindObjectOfType<LevelManager>();
+    //    if (levelManager != null)
+    //    {
+    //        levelManager.ResetLocalState();
+    //    }
+    //}
+
 }
