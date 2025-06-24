@@ -19,6 +19,7 @@ public class MenuManager : MonoBehaviour
      * PantallaCliente = 2,
      * PantallaLobyHost = 3,
      * PantallaLobyCliente = 4,
+     * nameselector = 5
      */
     private List<int> screens = new List<int>() { 0, 1, 2, 3, 4 };
     private List<int> screenSelect = new List<int>() { 1, 3, 2, 4 };
@@ -175,5 +176,12 @@ public class MenuManager : MonoBehaviour
 #else
             Application.Quit(); // Salir en una build
 #endif
+    }
+
+
+    public void nameslectorview()
+    {
+        CambiarEscenaAdelante();
+        pantallas[5].SetActive(true);
     }
 }

@@ -9,9 +9,6 @@ using UnityEngine.UIElements;
 
 public class PlayerController : NetworkBehaviour
 {
-
-
-    System.Random rand = new System.Random();
     [SerializeField] private GameObject playerCameraPrefab;
     [SerializeField] private GameObject playerNameUIPrefab;
     private TextMeshProUGUI playerNameText;
@@ -380,6 +377,5 @@ public class PlayerController : NetworkBehaviour
         transform.position = randomPosition;
         //Position.Value = randomPosition;
     }
-
 }
 
