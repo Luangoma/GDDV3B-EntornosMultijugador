@@ -55,8 +55,9 @@ public class PauseMenu : MonoBehaviour
 
     public void QuitGame()
     {
-        // Opcional: Asegúrate de que el tiempo está restaurado antes de salir
+        // Asegurar de que el tiempo está restaurado antes de salir
         Time.timeScale = 1f;
+        NetworkManager.Singleton.Shutdown();    // Si el cliente deja la partida se desconecta de la red
         SceneManager.LoadScene("MenuScene"); // Cambia "MainMenu" por el nombre de tu escena principal
     }
 }
