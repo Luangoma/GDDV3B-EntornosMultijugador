@@ -474,23 +474,18 @@ public class GameManager : NetworkBehaviour
             return;
         }
 
-        // Verificar condiciones según el modo de juego
-        switch (modo.Value)
+        // La condicion de tiempo es para tanto el modo tiempo como el modo monedas
+        if (timeExpired)
         {
-            case GameMode.Monedas:
-                if (collectedCoins.Value >= totalCoins.Value && totalCoins.Value > 0)
-                {
-                    DetermineCoinVictory();
-                }
-                break;
-
-            case GameMode.Tiempo:
-                if (timeExpired)
-                {
-                    DetermineTimeVictory();
-                }
-                break;
+            DetermineTimeVictory();
         }
+        
+        if (modo.Value == GameMode.Monedas && collectedCoins.Value >= totalCoins.Value && totalCoins.Value > 0)
+        {
+            DetermineCoinVictory();
+        }        
+
+        
     }
 
     private void DetermineZombieVictory()
