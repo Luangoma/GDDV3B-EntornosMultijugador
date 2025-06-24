@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -25,17 +26,20 @@ public class changeModeMenuText : MonoBehaviour
     }
     public void changeMode()
     {
-        if (gm.modo.Value == GameMode.Tiempo)
+        if (NetworkManager.Singleton.IsServer)
         {
-            gm.modo.Value = GameMode.Monedas;
-            gm.densidad.Value = slider.value;
-            monedasUI.gameObject.SetActive(true);
-        }
-        else
-        {
-            gm.modo.Value = GameMode.Tiempo;
-            gm.densidad.Value = -1;
-            monedasUI.gameObject.SetActive(false);
+            if (gm.modo.Value == GameMode.Tiempo)
+            {
+                gm.modo.Value = GameMode.Monedas;
+                gm.densidad.Value = slider.value * 5;
+                monedasUI.gameObject.SetActive(true);
+            }
+            else
+            {
+                gm.modo.Value = GameMode.Tiempo;
+                gm.densidad.Value = -1;
+                monedasUI.gameObject.SetActive(false);
+            }
         }
     }
 }

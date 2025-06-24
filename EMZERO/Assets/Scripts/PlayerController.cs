@@ -18,6 +18,8 @@ public class PlayerController : NetworkBehaviour
     [Header("Character settings")]
     public bool isZombie = false; // A adir una propiedad para el estado del jugador
     public string uniqueID; // A adir una propiedad para el identificador  nico
+    public NetworkVariable<bool> WasOriginallyZombie = new NetworkVariable<bool>(false);
+    public bool convertido;
 
     [Header("Movement Settings")]
     public float moveSpeed = 5f;           // Velocidad de movimiento
@@ -49,6 +51,12 @@ public class PlayerController : NetworkBehaviour
         gameManager = GameManager.Instance;
         if (IsOwner)
         {
+            // Esta variable no se tenia ni acceso
+            //WasOriginallyZombie.Value = isZombie;
+
+            Debug.Log($"Player {OwnerClientId} spawned - isZombie: {isZombie}, WasOriginallyZombie: {WasOriginallyZombie.Value}");
+
+
             // Asigna la c mara principal a este jugador local
             //Camera mainCamera = Camera.main;
             //if (mainCamera != null)
@@ -277,16 +285,25 @@ public class PlayerController : NetworkBehaviour
         Rotation.OnValueChanged -= OnRotationChanged;
         Position.OnValueChanged -= OnPositionChanged;
         gameManager.collectedCoins.OnValueChanged -= OnCoinsIncreased;
-
-        if (isZombie)
-        {
-            gameManager.zombieNumber.Value--;
+        if (gameManager != null) {
+            if (NetworkManager.Singleton.IsServer)
+            {
+                if (isZombie)
+                {
+                    gameManager.zombieNumber.Value--;
+                    gameManager.ZombiesDesconectados.Value++;
+                }
+                else
+                {
+                    gameManager.humanNumber.Value--;
+                    if (!convertido)
+                    {
+                        gameManager.HumanosDesconectados.Value++;
+                    }
+                }
+            }
+            gameManager.NotifyPlayerTransformedServerRpc();
         }
-        else
-        {
-            gameManager.humanNumber.Value--;
-        }
-        gameManager.NotifyPlayerTransformedServerRpc();
     }
 
 

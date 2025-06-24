@@ -69,7 +69,7 @@ public class LevelManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("Despertando el nivel");
+        Debug.LogError("Despertando el nivel");
 
         Cursor.lockState = CursorLockMode.Locked; // Bloquea el cursor
         Cursor.visible = false; // Oculta el cursor
@@ -91,11 +91,45 @@ public class LevelManager : MonoBehaviour
             gm.SetTotalCoins(levelBuilder.GetCoinsGenerated());
         }
     }
+    public void rebuildLevel() {
+        Debug.LogError("Reconstruyendo el nivel");
 
+
+        // Obtener la referencia al UniqueIDGenerator
+        uniqueIdGenerator = GetComponent<UniqueIdGenerator>();
+
+        // Obtener la referencia al LevelBuilder
+        levelBuilder = GetComponent<LevelBuilder>();
+
+        // Obtener la referencia al GameManager
+        gm = GameManager.Instance;
+
+        Time.timeScale = 1f; // Asegurarse de que el tiempo no est� detenido
+        if (levelBuilder != null)
+        {
+            levelBuilder.Build(gm.densidad.Value,gm.GetSeed());
+            SpawnPoints = levelBuilder.GetSpawnPoints();
+            gm.SetTotalCoins(levelBuilder.GetCoinsGenerated());
+        }
+    }
     private void Start()
     {
         minutes = gm.tiempo.Value;
         gameMode = gm.modo.Value;
+
+        if (levelBuilder == null)
+        {
+            rebuildLevel();
+            Debug.LogError("LevelBuilder no encontrado. Asegúrate de que el componente est� asignado en el GameObject.");
+            return;
+        }
+
+        // Corregir isGameOver
+        if (NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogError(gm.isGameOver.Value);
+            gm.isGameOver.Value = false;
+        }
 
         Debug.Log("Iniciando el nivel");
         // Buscar el objeto "CanvasPlayer" en la escena
@@ -465,10 +499,10 @@ public class LevelManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None; // Bloquea el cursor
         Cursor.visible = true; // Oculta el cursor
 
-        gm.ResetConvinientData();
+        
+        gm.ResetConvinientDataServerRpc();
 
-        // Cargar la escena del men  principal
-        SceneManager.LoadScene("MenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
+        
     }
 
     public void GameOver(string message)
