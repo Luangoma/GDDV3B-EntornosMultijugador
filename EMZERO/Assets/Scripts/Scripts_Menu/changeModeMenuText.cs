@@ -31,7 +31,7 @@ public class changeModeMenuText : MonoBehaviour
             if (gm.modo.Value == GameMode.Tiempo)
             {
                 gm.modo.Value = GameMode.Monedas;
-                gm.densidad.Value = slider.value;
+                gm.densidad.Value = slider.value * 5;
                 monedasUI.gameObject.SetActive(true);
             }
             else

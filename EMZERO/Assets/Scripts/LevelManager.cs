@@ -499,6 +499,7 @@ public class LevelManager : MonoBehaviour
         Cursor.lockState = CursorLockMode.None; // Bloquea el cursor
         Cursor.visible = true; // Oculta el cursor
 
+        
         gm.ResetConvinientDataServerRpc();
 
         

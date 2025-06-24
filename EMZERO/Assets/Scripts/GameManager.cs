@@ -129,6 +129,8 @@ public class GameManager : NetworkBehaviour
 
         {
             collectedCoins.Value = 0;
+            timeExpired = false;
+
             mapSeed.Value = UnityEngine.Random.Range(MINSEED, MAXSEED);
             //foreach (var item in readyStates.Keys) { readyStates[item] = false; }
             readyStates.Clear(); // Limpiar los estados de ready para reiniciar el juego
@@ -474,18 +476,27 @@ public class GameManager : NetworkBehaviour
             return;
         }
 
-        // La condicion de tiempo es para tanto el modo tiempo como el modo monedas
-        if (timeExpired)
+        switch (modo.Value)
         {
-            DetermineTimeVictory();
-        }
-        
-        if (modo.Value == GameMode.Monedas && collectedCoins.Value >= totalCoins.Value && totalCoins.Value > 0)
-        {
-            DetermineCoinVictory();
-        }        
+            case GameMode.Monedas:
+                if (collectedCoins.Value >= totalCoins.Value && totalCoins.Value > 0)
+                {
+                    DetermineCoinVictory();
+                }
+                else if (timeExpired) { 
+                    DetermineTimeVictory();
+                }
+                break;
 
-        
+            case GameMode.Tiempo:
+                if (timeExpired)
+                {
+                    DetermineTimeVictory();
+                }
+                break;
+        }
+
+
     }
 
     private void DetermineZombieVictory()
