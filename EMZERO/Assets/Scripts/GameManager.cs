@@ -235,7 +235,8 @@ public class GameManager : NetworkBehaviour
                 }
 
                 backupPlayerNames[clientId] = uniqueIdGenerator.GenerateUniqueID(); // Genera el nombre, que luego cada player lo asigna a su network variable en playercontroller
-                SpawnClient(clientId, spawnPoints[aux], prefab);
+                GameObject player = Instantiate(prefab, spawnPoints[aux], Quaternion.identity);
+                player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
 
                 // Configurar WasOriginallyZombie para zombies iniciales
                 {
