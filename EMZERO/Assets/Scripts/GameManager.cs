@@ -114,13 +114,53 @@ public class GameManager : NetworkBehaviour
     }
     #endregion
     #region Other methods
-    public void ResetConvinientData()
+
+    [ServerRpc]
+    public void ResetConvinientDataServerRpc()
     {
-        collectedCoins.Value = 0;
-        if (nm.IsHost)
+        if (nm.IsServer)
+
         {
+            collectedCoins.Value = 0;
             mapSeed.Value = UnityEngine.Random.Range(MINSEED, MAXSEED);
             //foreach (var item in readyStates.Keys) { readyStates[item] = false; }
+            readyStates.Clear(); // Limpiar los estados de ready para reiniciar el juego
+            // Reiniciar el contador de monedas y zombies
+            humanNumber.Value = 0;
+            zombieNumber.Value = 0;
+            //timeExpired = false;
+            //isGameOver.Value = false;
+            densidad.Value = -5f; // Reiniciar la densidad de monedas
+            // Destruir el level manager si existe
+            LevelManager lm = FindObjectOfType<LevelManager>();
+            if (lm != null)
+            {
+                Destroy(lm.gameObject);
+            }
+
+            Debug.LogError(densidad.Value);
+
+            Debug.LogError(isGameOver.Value);
+
+            // Cargar la escena del men  principal
+            NetworkManager.Singleton.SceneManager.LoadScene("MenuScene", LoadSceneMode.Single);
+
+            // Despawnear a todos los jugadores
+            //foreach (var clientId in nm.ConnectedClientsIds)
+            //{
+            //    if (nm.SpawnManager.SpawnedObjects.TryGetValue(clientId, out NetworkObject obj))
+            //    {
+            //        obj.Despawn();
+            //    }
+            //}
+            // Despawnear objetos de red que no sean jugadores
+            //foreach (var obj in FindObjectsOfType<NetworkObject>())
+            //{
+            //    if (obj != null && obj.IsSpawned && obj.gameObject.tag != "Player")
+            //    {
+            //        obj.Despawn();
+            //    }
+            //}
         }
     }
     private void HandleClientConnected(ulong clientId)
@@ -341,8 +381,8 @@ public class GameManager : NetworkBehaviour
     [ServerRpc]
     private void CheckWinConditionsServerRpc()
     {
-        if (isGameOver.Value) return; // No hacer nada si el juego ya terminó
 
+        if (isGameOver.Value) return; // No hacer nada si el juego ya terminó
         Debug.Log($"Verificando condiciones - Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}, Monedas: {collectedCoins.Value}/{totalCoins.Value}");
 
         // Zombies ganan si no quedan humanos
