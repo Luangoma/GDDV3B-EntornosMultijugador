@@ -215,7 +215,7 @@ public class GameManager : NetworkBehaviour
                 return false;
         }
         // Debe haber al menos 2 jugadores (host + al menos un cliente)
-        return nm.ConnectedClientsIds.Count > 0;
+        return nm.ConnectedClientsIds.Count > 1;
     }
     private void OnNetworkSceneLoaded(string sceneName, LoadSceneMode mode, List<ulong> clientsCompleted, List<ulong> clientsTimedOut)
     {
