@@ -1,3 +1,5 @@
+using Unity.Netcode;
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -27,7 +29,10 @@ public class PauseMenu : MonoBehaviour
     {
         isPaused = true;
         pausePanel.SetActive(true); // Muestra el panel de pausa
-        Time.timeScale = 0f; // Detiene el tiempo en el juego
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            Time.timeScale = 0f; // Detiene el tiempo en el juego solo si no es el servidor
+        }
 
         // Gestión del cursor
         Cursor.lockState = CursorLockMode.None; // Desbloquea el cursor
@@ -38,7 +43,10 @@ public class PauseMenu : MonoBehaviour
     {
         isPaused = false;
         pausePanel.SetActive(false); // Oculta el panel de pausa
-        Time.timeScale = 1f; // Reactiva el tiempo en el juego
+        if (!NetworkManager.Singleton.IsServer)
+        {
+            Time.timeScale = 1f; // Reactiva el tiempo en el juego si era un cliente
+        }
 
         // Gestión del cursor
         Cursor.lockState = CursorLockMode.Locked; // Bloquea el cursor

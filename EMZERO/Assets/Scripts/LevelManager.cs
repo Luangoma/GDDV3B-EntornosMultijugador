@@ -55,8 +55,6 @@ public class LevelManager : MonoBehaviour
 
     public GameObject gameOverPanel; // Asigna el panel desde el inspector
 
-
-
     // Un tipo de variable especial, del cual no se puede leer hasta que el servidor lo actualice
     public NetworkVariable<int> playerNumber = new NetworkVariable<int>(
         0,
@@ -71,7 +69,7 @@ public class LevelManager : MonoBehaviour
 
     private void Awake()
     {
-        Debug.Log("Despertando el nivel");
+        Debug.LogError("Despertando el nivel");
 
         Cursor.lockState = CursorLockMode.Locked; // Bloquea el cursor
         Cursor.visible = false; // Oculta el cursor
@@ -93,11 +91,42 @@ public class LevelManager : MonoBehaviour
             gm.SetTotalCoins(levelBuilder.GetCoinsGenerated());
         }
     }
+    public void rebuildLevel() {
+        Debug.LogError("Reconstruyendo el nivel");
 
+
+        // Obtener la referencia al UniqueIDGenerator
+        uniqueIdGenerator = GetComponent<UniqueIdGenerator>();
+
+        // Obtener la referencia al LevelBuilder
+        levelBuilder = GetComponent<LevelBuilder>();
+
+        // Obtener la referencia al GameManager
+        gm = GameManager.Instance;
+
+        Time.timeScale = 1f; // Asegurarse de que el tiempo no est� detenido
+        if (levelBuilder != null)
+        {
+            levelBuilder.Build(gm.densidad.Value,gm.GetSeed());
+            SpawnPoints = levelBuilder.GetSpawnPoints();
+            gm.SetTotalCoins(levelBuilder.GetCoinsGenerated());
+        }
+    }
     private void Start()
     {
         minutes = gm.tiempo.Value;
         gameMode = gm.modo.Value;
+
+        if (levelBuilder == null)
+        {
+            rebuildLevel();
+            Debug.LogError("LevelBuilder no encontrado. Asegúrate de que el componente est� asignado en el GameObject.");
+            return;
+        }
+        
+
+        Debug.LogError(gm.isGameOver.Value);
+        gm.isGameOver.Value = false;
 
         Debug.Log("Iniciando el nivel");
         // Buscar el objeto "CanvasPlayer" en la escena
@@ -372,7 +401,7 @@ public class LevelManager : MonoBehaviour
     {
         if (NetworkManager.Singleton.IsServer)
         {
-            //GetComponent<NetworkObject>().Despawn();
+            GetComponent<NetworkObject>().Despawn();
         }
     }
 
@@ -411,32 +440,7 @@ public class LevelManager : MonoBehaviour
 
     }
     */
-    public void ResetLocalState()
-    {
-        // Oculta el panel de Game Over
-        if (gameOverPanel != null)
-        {
-            gameOverPanel.SetActive(false);
-        }
 
-        // Restaura el tiempo
-        Time.timeScale = 1f;
-
-        // Restaura el cursor y el input
-        Cursor.lockState = CursorLockMode.Locked;
-        Cursor.visible = false;
-
-        // Restaura variables locales
-        isGameOver = false;
-        gameOverPanelShown = false;
-        isCountdownRunning = false;
-        hasNotifiedServer = false;
-        localTimeRemaining = 0;
-
-        // Limpia la UI si es necesario
-        if (timeText != null) timeText.text = "";
-        // ... cualquier otro elemento relevante
-    }
     public void StartLocalCountdown(int durationSeconds)
     {
         localTimeRemaining = durationSeconds;
@@ -488,56 +492,34 @@ public class LevelManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        if (NetworkManager.Singleton.IsHost) { 
-            NetworkManager.Singleton.Shutdown();
-            gm.ResetConvinientDataServerRpc();
-            
-        }   // Asegurarse de que solo el host hace el despawn
-        if (NetworkManager.Singleton.IsClient)
-        {
-            // Cierra la red y carga la escena de menú
-            NetworkManager.Singleton.Shutdown();
-            SceneManager.LoadScene("RespawnMenuScene");
-        }
         // Gesti n del cursor
         Cursor.lockState = CursorLockMode.None; // Bloquea el cursor
         Cursor.visible = true; // Oculta el cursor
 
+        gm.ResetConvinientDataServerRpc();
 
-        // Cargar la escena del menu principal
-        SceneManager.LoadScene("RespawnMenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
+        
     }
 
-    // Alguien puso esto y no se usa
-    //public void GameOver(string message)
-    //{
-    //    isGameOver = true;
-    //    ShowGameOverPanel(message);
-    //}
+    public void GameOver(string message)
+    {
+        isGameOver = true;
+        ShowGameOverPanel(message);
+    }
 
     public void ShowGameOverPanel(string message)
     {
-        if (gameOverPanel != null && !gameOverPanelShown)
+        if (gameOverPanel != null)
         {
-            //gameOverPanelShown = true;
-            Debug.Log("Mostrando panel de Game Over con mensaje: " + message);
+            Time.timeScale = 0f;
+            gameOverPanel.SetActive(true);
 
-            // Activar/desactivar elementos según el tipo de mensaje
-            bool isVictory = message.Contains("VICTORIA");
-            Transform victoryElements = gameOverPanel.transform.Find("VictoryElements");
-            Transform defeatElements = gameOverPanel.transform.Find("DefeatElements");
-
-            if (victoryElements != null) victoryElements.gameObject.SetActive(isVictory);
-            if (defeatElements != null) defeatElements.gameObject.SetActive(!isVictory);
-
+            // Buscar el texto donde mostrar el mensaje
             TextMeshProUGUI resultText = gameOverPanel.GetComponentInChildren<TextMeshProUGUI>();
             if (resultText != null)
             {
                 resultText.text = message;
             }
-
-            Time.timeScale = 0f;
-            gameOverPanel.SetActive(true);
 
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
