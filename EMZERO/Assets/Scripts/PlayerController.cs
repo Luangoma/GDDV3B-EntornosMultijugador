@@ -285,19 +285,19 @@ public class PlayerController : NetworkBehaviour
         Rotation.OnValueChanged -= OnRotationChanged;
         Position.OnValueChanged -= OnPositionChanged;
         gameManager.collectedCoins.OnValueChanged -= OnCoinsIncreased;
-
-        if (isZombie)
-        {
-            gameManager.zombieNumber.Value--;
-            gameManager.ZombiesDesconectados.Value++;
-
-        }
-        else
-        {
-            gameManager.humanNumber.Value--;
-            gameManager.HumanosDesconectados.Value++;
-        }
+        if (gameManager != null) {
+            if (isZombie)
+            {
+                gameManager.zombieNumber.Value--;
+                gameManager.ZombiesDesconectados.Value++;
+            }
+            else
+            {
+                gameManager.humanNumber.Value--;
+                gameManager.HumanosDesconectados.Value++;
+            }
         gameManager.NotifyPlayerTransformedServerRpc();
+        }
     }
 
 
