@@ -289,10 +289,13 @@ public class PlayerController : NetworkBehaviour
         if (isZombie)
         {
             gameManager.zombieNumber.Value--;
+            gameManager.ZombiesDesconectados.Value++;
+
         }
         else
         {
             gameManager.humanNumber.Value--;
+            gameManager.HumanosDesconectados.Value++;
         }
         gameManager.NotifyPlayerTransformedServerRpc();
     }

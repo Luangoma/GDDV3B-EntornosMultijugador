@@ -64,6 +64,8 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> zombieNumber = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> totalCoins = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> collectedCoins = new(default, rpEveryone, wpServer);
+    public NetworkVariable<int> ZombiesDesconectados = new(default, rpEveryone, wpServer);
+    public NetworkVariable<int> HumanosDesconectados = new(default, rpEveryone, wpServer);
     // Data builder
     public NetworkVariable<int> mapSeed = new(default, rpEveryone, wpServer);
     #endregion
@@ -390,6 +392,7 @@ public class GameManager : NetworkBehaviour
         }
     }
 
+    //Tipos de victoria
     public enum VictoryType
     {
         ZombieVictory,
@@ -405,13 +408,18 @@ public class GameManager : NetworkBehaviour
         if (isGameOver.Value) return;
 
         // Verificar abandono
-        if (nm.ConnectedClientsIds.Count < initialPlayerCount)
+        if (zombieNumber.Value == 0 && zombieNumber.Value <= ZombiesDesconectados.Value)
         {
-            EndGameForAll(VictoryType.GameAbandoned);
+            EndGameForAll(VictoryType.GameAbandoned, "¡Los zombies abandonaron la partida!");
+            return; ;
+        }
+        else if(humanNumber.Value == 0 && humanNumber.Value < HumanosDesconectados.Value)
+        {
+            EndGameForAll(VictoryType.GameAbandoned, "¡Los humanos abandonaron la partida!");
             return;
         }
 
-        // Zombies ganan si no quedan humanos
+        // Zombies ganan si no quedan humanos independientemente del modo de juego
         if (humanNumber.Value <= 0)
         {
             DetermineZombieVictory();
@@ -448,16 +456,17 @@ public class GameManager : NetworkBehaviour
         if (lastConvertedHumanId.HasValue)
         {
             //Debug.Log($"Procesando último humano convertido: {lastConvertedHumanId}");
+            //Si hay ultimo humano convertido
             if (lastConvertedHumanId != null)
-            {
-                
+            {                
                     //Debug.Log($"ENVIANDO DERROTA al último humano: {lastConvertedHumanId.Value}");
+
+                    //Se le dice solo al ultimo humano que ha perdido
                     EndGameForPlayer(VictoryType.Loss,
                         "¡Derrota! Fuiste el último humano en ser convertido",
                         lastConvertedHumanId.Value);
-
-                    playersNotified.Add(lastConvertedHumanId.Value);
-                
+                //Evita que el ultimo humano reciba doble pantalla de victoria al ser ultimo humano y zombie que gana
+                playersNotified.Add(lastConvertedHumanId.Value);                
             }
         }
 
@@ -484,14 +493,20 @@ public class GameManager : NetworkBehaviour
     {
         isGameOver.Value = true;
 
+        //Recorrer todos los usuarios
         foreach (var client in nm.ConnectedClients)
         {
+            //ver si son humanos o zombies
             var player = client.Value.PlayerObject.GetComponent<PlayerController>();
+            //los zombies reciben el primer mensaje, los humanos el segundo
             string message = player.isZombie
                 ? "¡DERROTA! Los humanos recogieron todas las monedas"
                 : "¡VICTORIA! Han recogido todas las monedas";
 
+            // Asigna el tipo de victoria/derrota según el equipo (zombie/humano
             VictoryType victoryType = player.isZombie ? VictoryType.Loss : VictoryType.HumanVictory;
+
+            // Notifica individualmente al jugador con su resultado
             EndGameForPlayer(victoryType, message, client.Key);
         }
     }
@@ -499,7 +514,6 @@ public class GameManager : NetworkBehaviour
     private void DetermineTimeVictory()
     {
         isGameOver.Value = true;
-        bool humansSurvived = humanNumber.Value > 0;
 
         foreach (var client in nm.ConnectedClients)
         {
@@ -507,18 +521,15 @@ public class GameManager : NetworkBehaviour
 
             if (player.isZombie)
             {
-                string message = humansSurvived ? "" : "¡VICTORIA! Todos los humanos fueron convertidos";
-                VictoryType victoryType = humansSurvived ? VictoryType.Loss : VictoryType.ZombieVictory;
-                EndGameForPlayer(victoryType, message, client.Key);
+                // Zombies reciben mensaje de derrota
+                EndGameForPlayer(VictoryType.Loss,
+                    "¡Derrota! Los humanos sobrevivieron el tiempo límite",
+                    client.Key);
             }
             else
             {
-                string message = humansSurvived
-                    ? "¡VICTORIA! Sobrevivieron el tiempo límite"
-                    : "¡DERROTA! No lograron sobrevivir";
-
-                VictoryType victoryType = humansSurvived ? VictoryType.HumanVictory : VictoryType.Loss;
-                EndGameForPlayer(victoryType, message, client.Key);
+                // Humanos reciben mensaje de victoria
+                EndGameForPlayer(VictoryType.HumanVictory, "¡VICTORIA! Sobreviviste al tiempo límite", client.Key);
             }
         }
     }
