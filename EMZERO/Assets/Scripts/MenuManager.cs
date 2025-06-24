@@ -184,4 +184,8 @@ public class MenuManager : MonoBehaviour
         CambiarEscenaAdelante();
         pantallas[5].SetActive(true);
     }
+    public void nameSelectOff()
+    {
+        pantallas[5].SetActive(false);
+    }
 }
