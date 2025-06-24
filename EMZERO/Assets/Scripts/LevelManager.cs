@@ -372,7 +372,7 @@ public class LevelManager : MonoBehaviour
     {
         if (NetworkManager.Singleton.IsServer)
         {
-            GetComponent<NetworkObject>().Despawn();
+            //GetComponent<NetworkObject>().Despawn();
         }
     }
 
@@ -411,7 +411,32 @@ public class LevelManager : MonoBehaviour
 
     }
     */
+    public void ResetLocalState()
+    {
+        // Oculta el panel de Game Over
+        if (gameOverPanel != null)
+        {
+            gameOverPanel.SetActive(false);
+        }
 
+        // Restaura el tiempo
+        Time.timeScale = 1f;
+
+        // Restaura el cursor y el input
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
+
+        // Restaura variables locales
+        isGameOver = false;
+        gameOverPanelShown = false;
+        isCountdownRunning = false;
+        hasNotifiedServer = false;
+        localTimeRemaining = 0;
+
+        // Limpia la UI si es necesario
+        if (timeText != null) timeText.text = "";
+        // ... cualquier otro elemento relevante
+    }
     public void StartLocalCountdown(int durationSeconds)
     {
         localTimeRemaining = durationSeconds;
@@ -463,14 +488,24 @@ public class LevelManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
+        if (NetworkManager.Singleton.IsHost) { 
+            NetworkManager.Singleton.Shutdown();
+            gm.ResetConvinientDataServerRpc();
+            
+        }   // Asegurarse de que solo el host hace el despawn
+        if (NetworkManager.Singleton.IsClient)
+        {
+            // Cierra la red y carga la escena de menú
+            NetworkManager.Singleton.Shutdown();
+            SceneManager.LoadScene("RespawnMenuScene");
+        }
         // Gesti n del cursor
         Cursor.lockState = CursorLockMode.None; // Bloquea el cursor
         Cursor.visible = true; // Oculta el cursor
 
-        gm.ResetConvinientData();
 
-        // Cargar la escena del men  principal
-        SceneManager.LoadScene("MenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
+        // Cargar la escena del menu principal
+        SceneManager.LoadScene("RespawnMenuScene"); // Cambia "MenuScene" por el nombre de tu escena principal
     }
 
     // Alguien puso esto y no se usa
