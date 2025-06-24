@@ -54,7 +54,9 @@ public class PlayerController : NetworkBehaviour
         gameManager = GameManager.Instance;
         if (IsOwner)
         {
-            WasOriginallyZombie.Value = isZombie;
+            // Esta variable no se tenia ni acceso
+            //WasOriginallyZombie.Value = isZombie;
+
             Debug.Log($"Player {OwnerClientId} spawned - isZombie: {isZombie}, WasOriginallyZombie: {WasOriginallyZombie.Value}");
 
 
@@ -287,20 +289,23 @@ public class PlayerController : NetworkBehaviour
         Position.OnValueChanged -= OnPositionChanged;
         gameManager.collectedCoins.OnValueChanged -= OnCoinsIncreased;
         if (gameManager != null) {
-            if (isZombie)
+            if (NetworkManager.Singleton.IsServer)
             {
-                gameManager.zombieNumber.Value--;
-                gameManager.ZombiesDesconectados.Value++;
-            }
-            else
-            {
-                gameManager.humanNumber.Value--;
-                if (!convertido)
+                if (isZombie)
                 {
-                    gameManager.HumanosDesconectados.Value++;
+                    gameManager.zombieNumber.Value--;
+                    gameManager.ZombiesDesconectados.Value++;
+                }
+                else
+                {
+                    gameManager.humanNumber.Value--;
+                    if (!convertido)
+                    {
+                        gameManager.HumanosDesconectados.Value++;
+                    }
                 }
             }
-        gameManager.NotifyPlayerTransformedServerRpc();
+            gameManager.NotifyPlayerTransformedServerRpc();
         }
     }
 

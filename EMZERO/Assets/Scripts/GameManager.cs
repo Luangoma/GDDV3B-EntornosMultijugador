@@ -149,10 +149,22 @@ public class GameManager : NetworkBehaviour
 
             Debug.LogError(isGameOver.Value);
 
-            // Cargar la escena del men  principal
-            NetworkManager.Singleton.SceneManager.LoadScene("MenuScene", LoadSceneMode.Single);
+            // Cargar la escena del menu principal para todos si al menos hay otro cliente conectado
+            if (nm.ConnectedClientsIds.Count > 1)
+            {
+                NetworkManager.Singleton.SceneManager.LoadScene("MenuScene", LoadSceneMode.Single);
+            }
+            else
+            {
+                Debug.LogError("No hay clientes conectados, cerrando la conexión del host.");
+                // Si solo queda el host se destruye la conexión y se vuelve al menu
+                Time.timeScale = 1f;
+                NetworkManager.Singleton.Shutdown();    // Si el host deja la partida se desconecta de la red
+                SceneManager.LoadScene("MenuScene"); // Cambia "MainMenu" por el nombre de tu escena principal
+            }
+            
 
-            // Despawnear a todos los jugadores
+            //Despawnear a todos los jugadores
             //foreach (var clientId in nm.ConnectedClientsIds)
             //{
             //    if (nm.SpawnManager.SpawnedObjects.TryGetValue(clientId, out NetworkObject obj))
@@ -302,6 +314,7 @@ public class GameManager : NetworkBehaviour
 
     public void SetTotalCoins(int coins)
     {
+        if (!IsServer) return;
         totalCoins.Value = coins;
         Debug.Log($"Total de monedas generadas en el nivel: {totalCoins.Value}");
 
@@ -378,8 +391,7 @@ public class GameManager : NetworkBehaviour
         // Verificar condici n de victoria
         CheckWinConditionsServerRpc();
     }
-
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void NotifyPlayerTransformedServerRpc()
     {
         //Debug.Log("NotifyPlayerTransformedServerRpc llamado");

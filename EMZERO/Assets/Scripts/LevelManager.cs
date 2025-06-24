@@ -123,10 +123,13 @@ public class LevelManager : MonoBehaviour
             Debug.LogError("LevelBuilder no encontrado. Asegúrate de que el componente est� asignado en el GameObject.");
             return;
         }
-        
 
-        Debug.LogError(gm.isGameOver.Value);
-        gm.isGameOver.Value = false;
+        // Corregir isGameOver
+        if (NetworkManager.Singleton.IsServer)
+        {
+            Debug.LogError(gm.isGameOver.Value);
+            gm.isGameOver.Value = false;
+        }
 
         Debug.Log("Iniciando el nivel");
         // Buscar el objeto "CanvasPlayer" en la escena

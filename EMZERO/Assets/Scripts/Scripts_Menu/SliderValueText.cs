@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
+using Unity.Netcode;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -14,7 +15,10 @@ public class SliderValueText : MonoBehaviour
     }
     public void Start()
     {
-        slider.value = GameManager.Instance.tiempo.Value;
+        if (NetworkManager.Singleton.IsServer)
+        {
+            slider.value = GameManager.Instance.tiempo.Value;
+        }
     }
     public void HandleSliderValueOnChangeBy5(float value)
     {
