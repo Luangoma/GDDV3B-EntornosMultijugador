@@ -21,7 +21,6 @@ public class GameManager : NetworkBehaviour
     private List<Vector3> spawnPoints; // Centros de las habitaciones - las saca del level builder
     private NetworkManager nm;
     private UniqueIdGenerator uniqueIdGenerator;
-    private int initialPlayerCount;
 
     private ulong? lastConvertedHumanId = null;
 
@@ -66,6 +65,7 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> collectedCoins = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> ZombiesDesconectados = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> HumanosDesconectados = new(default, rpEveryone, wpServer);
+
     // Data builder
     public NetworkVariable<int> mapSeed = new(default, rpEveryone, wpServer);
     #endregion
@@ -287,7 +287,6 @@ public class GameManager : NetworkBehaviour
         int players = nm.ConnectedClientsList.Count;
         humanNumber.Value = (players % 2 == 0) ? players / 2 : (players / 2) + 1;
         zombieNumber.Value = players / 2;
-        initialPlayerCount = players;
     }
 
     private void CreateSpawnPoints()
@@ -316,6 +315,7 @@ public class GameManager : NetworkBehaviour
         // Guardarme sus coordenadas y rotacion
         Debug.Log("ConvertHuman iniciado - Jugador: " + p.OwnerClientId);
 
+        p.GetComponent<PlayerController>().convertido = true;
 
         PlayerController humanController = p.GetComponent<PlayerController>();
         if (humanController != null && !humanController.isZombie)

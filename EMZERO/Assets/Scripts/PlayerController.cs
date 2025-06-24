@@ -22,6 +22,7 @@ public class PlayerController : NetworkBehaviour
     public bool isZombie = false; // A adir una propiedad para el estado del jugador
     public string uniqueID; // A adir una propiedad para el identificador  nico
     public NetworkVariable<bool> WasOriginallyZombie = new NetworkVariable<bool>(false);
+    public bool convertido;
 
     [Header("Movement Settings")]
     public float moveSpeed = 5f;           // Velocidad de movimiento
@@ -294,7 +295,10 @@ public class PlayerController : NetworkBehaviour
             else
             {
                 gameManager.humanNumber.Value--;
-                gameManager.HumanosDesconectados.Value++;
+                if (!convertido)
+                {
+                    gameManager.HumanosDesconectados.Value++;
+                }
             }
         gameManager.NotifyPlayerTransformedServerRpc();
         }
