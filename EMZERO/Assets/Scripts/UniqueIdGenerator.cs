@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Unity.VisualScripting;
 using UnityEngine;
 
 /// <summary>
@@ -30,11 +31,16 @@ public class UniqueIdGenerator : MonoBehaviour
     /// Método para generar un identificador único.
     /// </summary>
     /// <returns>Identificador único generado.</returns>
-    public string GenerateUniqueID()
+    public string GenerateUniqueID(IEnumerable<string> sala = null)
     {
         string uniqueID = null;
         bool isUnique = false;
         int attempts = 0;
+
+        if (sala != null)
+        {
+            generatedIDs.AddRange(sala);
+        }
 
         while (attempts < 3 && !isUnique)
         {
