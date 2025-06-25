@@ -177,11 +177,10 @@ public class GameManager : NetworkBehaviour
     #endregion
     #region Other methods
 
-    [ServerRpc]
+    [ServerRpc(RequireOwnership = false)]
     public void ResetConvinientDataServerRpc()
     {
         if (nm.IsServer)
-
         {
             collectedCoins.Value = 0;
             timeExpired = false;
@@ -201,10 +200,6 @@ public class GameManager : NetworkBehaviour
             {
                 Destroy(lm.gameObject);
             }
-
-            Debug.LogError(densidad.Value);
-
-            Debug.LogError(isGameOver.Value);
 
             // Cargar la escena del menu principal para todos si al menos hay otro cliente conectado
             if (nm.ConnectedClientsIds.Count > 1)
@@ -303,9 +298,10 @@ public class GameManager : NetworkBehaviour
                     prefab = zombiePrefab;
                 }
 
-                //backupPlayerNames[clientId] = uniqueIdGenerator.GenerateUniqueID(); // Genera el nombre, que luego cada player lo asigna a su network variable en playercontroller
+                if (!backupPlayerNames.ContainsKey(clientId)) backupPlayerNames[clientId] = uniqueIdGenerator.GenerateUniqueID(backupPlayerNames.Values); // Genera el nombre, que luego cada player lo asigna a su network variable en playercontroller
                 GameObject player = Instantiate(prefab, spawnPoints[aux], Quaternion.identity);
                 player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
+
 
                 // Configurar WasOriginallyZombie para zombies iniciales
                 {

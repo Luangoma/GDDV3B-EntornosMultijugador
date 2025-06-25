@@ -25,11 +25,6 @@ public class NameSelector : NetworkBehaviour
         texterrores = textoerrores.GetComponent<TMP_Text>();
         textsalida.text = FormatName(unigen.GenerateUniqueID(null));
     }
-
-    public void OnNombreValueChanged(FixedString32Bytes viejo, FixedString32Bytes nuevo)
-    {
-        Debug.Log("alalalalla");
-    }
     private string FormatName(string name)
     {
         return $"Nombre actual:\n{name}";

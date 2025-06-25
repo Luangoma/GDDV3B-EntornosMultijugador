@@ -73,7 +73,6 @@ public class LevelBuilder : MonoBehaviour
     public void Build(float valor, int seed)
     {
         coinsDensity = valor;
-        Debug.LogError($"Densidad de monedas es: {coinsDensity}%");
         Random.InitState(seed);
         CreateRooms(roomWidth, roomLength, numberOfRooms);
     }
