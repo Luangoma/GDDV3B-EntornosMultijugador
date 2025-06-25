@@ -85,8 +85,7 @@ public class LevelManager : MonoBehaviour
     }
     public void rebuildLevel()
     {
-        Debug.LogError("Reconstruyendo el nivel");
-
+        
         // Referencias
         uniqueIdGenerator = GetComponent<UniqueIdGenerator>();
         levelBuilder = GetComponent<LevelBuilder>();
@@ -108,8 +107,7 @@ public class LevelManager : MonoBehaviour
         if (levelBuilder == null)
         {
             rebuildLevel();
-            Debug.LogError("LevelBuilder no referenciado en awake, se ha referenciado ahora");
-            return;
+                        return;
         }
 
         // Corregir isGameOver

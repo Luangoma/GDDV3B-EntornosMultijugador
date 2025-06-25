@@ -7129,6 +7129,8 @@ MonoBehaviour:
   - {fileID: 1283395019}
   - {fileID: 638852535}
   - {fileID: 678188233}
+  botonListoObjClient: {fileID: 2041477663}
+  botonListoObjHost: {fileID: 1761409973}
   actual: {fileID: 296295074}
   conxion: 0
 --- !u!1 &1674387588

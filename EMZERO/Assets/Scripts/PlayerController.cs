@@ -54,8 +54,7 @@ public class PlayerController : NetworkBehaviour
             // Esta variable no se tenia ni acceso
             //WasOriginallyZombie.Value = isZombie;
 
-            Debug.Log($"Player {OwnerClientId} spawned - isZombie: {isZombie}, WasOriginallyZombie: {WasOriginallyZombie.Value}");
-
+            
 
             // Asigna la c mara principal a este jugador local
             //Camera mainCamera = Camera.main;
@@ -79,8 +78,7 @@ public class PlayerController : NetworkBehaviour
                 CameraController cameraController = camObj.GetComponent<CameraController>();
                 if (cameraController != null)
                 {
-                    Debug.Log("C mara existente asignada al nuevo jugador local");
-                    cameraController.player = this.transform;
+                                        cameraController.player = this.transform;
                 }
 
             }
@@ -88,8 +86,7 @@ public class PlayerController : NetworkBehaviour
             {
                 if (playerCameraPrefab == null)
                 {
-                    Debug.LogWarning("playerCameraPrefab no asignado en PlayerController.");
-                    return;
+                                        return;
                 }
                 camObj = Instantiate(playerCameraPrefab);
                 cam = camObj.GetComponent<Camera>();
@@ -100,8 +97,7 @@ public class PlayerController : NetworkBehaviour
                 CameraController cameraController = camObj.GetComponent<CameraController>();
                 if (cameraController != null)
                 {
-                    Debug.Log("C mara asignada al jugador local");
-                    cameraController.player = this.transform;
+                                        cameraController.player = this.transform;
                 }
                 // Generar nombre nuevo solo en el caso de que la camara tambien sea nueva
             }
@@ -163,15 +159,8 @@ public class PlayerController : NetworkBehaviour
     [ServerRpc]
     private void SetPlayerNameServerRpc(ServerRpcParams rpcParams = default)
     {
-        //if (gameManager.backupPlayerNames[rpcParams.Receive.SenderClientId].Length > 0)
-        //{
-        //    Debug.LogError("Este jugador ya tenía nombre");
-        //    Debug.Log($"Player last name: {playerName.Value}");
-        //    return;
-        //}
         playerName.Value = gameManager.backupPlayerNames[rpcParams.Receive.SenderClientId];
-        Debug.Log($"Player name set to: {playerName.Value}");
-    }
+            }
 
     private void OnPlayerNameChanged(FixedString64Bytes oldValue, FixedString64Bytes newValue)
     {
@@ -242,8 +231,6 @@ public class PlayerController : NetworkBehaviour
         {
             return;
         }
-        //Debug.Log("NO me esta dejando controlar a este jugador !!!!!!");
-        //Debug.Log("puedo moverme");
         // Leer entrada del teclado
         horizontalInput = Input.GetAxis("Horizontal");
         verticalInput = Input.GetAxis("Vertical");
@@ -256,18 +243,14 @@ public class PlayerController : NetworkBehaviour
     }
     void MovePlayer()
     {
-        //Debug.Log("1");
         if (cameraTransform == null) { return; }
-        //Debug.Log("2");
-        // Calcular la direcci n de movimiento en relaci n a la c mara
+        // Calcular la direccion de movimiento en relacion a la camara
         Vector3 moveDirection = (cameraTransform.forward * verticalInput + cameraTransform.right * horizontalInput).normalized;
         moveDirection.y = 0f; // Asegurarnos de que el movimiento es horizontal (sin componente Y)
 
         // Mover el jugador usando el Transform
         if (moveDirection != Vector3.zero)
         {
-            //Debug.Log("Puedo controlar a este jugador !!!!!!");
-
             // Calcular la rotaci n en Y basada en la direcci n del movimiento
             Quaternion targetRotation = Quaternion.LookRotation(moveDirection, Vector3.up);
             SubmitRotationServerRpc(targetRotation);
@@ -321,10 +304,8 @@ public class PlayerController : NetworkBehaviour
             //gameManager.collectedCoins.Value++;
             UpdateCoinUI(gameManager.collectedCoins.Value);
 
-            Debug.Log($"Jugador {OwnerClientId} recolectó moneda (local)");
-            RequestCoinCollectionServerRpc();
-            Debug.Log($"Se envió petición al servidor desde {OwnerClientId}");
-        }
+                        RequestCoinCollectionServerRpc();
+                    }
     }
 
 
@@ -333,8 +314,7 @@ public class PlayerController : NetworkBehaviour
     {
         // Solo el servidor puede modificar este valor
         //gameManager.collectedCoins.Value++;
-        Debug.Log($"Monedas recolectadas (local): {gameManager.collectedCoins.Value}");
-
+        
         // Notificar al GameManager
         gameManager.NotifyCoinCollectedServerRpc();
         //GameManager.Instance?.NotifyCoinCollectedServerRpc();

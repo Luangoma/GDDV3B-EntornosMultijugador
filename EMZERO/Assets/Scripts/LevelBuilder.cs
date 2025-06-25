@@ -110,18 +110,13 @@ public class LevelBuilder : MonoBehaviour
     {
         if (floorPrefabs == null || floorPrefabs.Length == 0)
         {
-            Debug.LogError("No se han asignado prefabs de suelo.");
-            return;
+                        return;
         }
 
-        Debug.Log($"Creando habitaci�n en ({offsetX}, {offsetZ}) con dimensiones {width}x{length}...");
-        CreateFloor(width, length, offsetX, offsetZ);
-        Debug.Log($"Habitaci�n generada en ({offsetX}, {offsetZ}).");
-
-        Debug.Log($"Creando paredes en ({offsetX}, {offsetZ}) con dimensiones {width}x{length}...");
-        CreateWalls(width, length, offsetX, offsetZ);
-        Debug.Log($"Paredes generadas en ({offsetX}, {offsetZ}).");
-    }
+                CreateFloor(width, length, offsetX, offsetZ);
+        
+                CreateWalls(width, length, offsetX, offsetZ);
+            }
 
     /// <summary>
     /// Crea una cuadr�cula de baldosas para el suelo de una habitaci�n.
@@ -144,8 +139,7 @@ public class LevelBuilder : MonoBehaviour
             }
         }
 
-        Debug.Log($"Suelo generado con dimensiones {width}x{length} usando {floorPrefabs.Length} prefabs diferentes.");
-    }
+            }
 
     /// <summary>
     /// Coloca las esquinas, muros y puertas en los bordes de una habitaci�n.
@@ -300,7 +294,6 @@ public class LevelBuilder : MonoBehaviour
     private bool ShouldPlaceCoin()
     {
         float randomValue = Random.Range(0, 100);
-        //Debug.LogError($"Valor aleatorio para monedas: {randomValue}, Densidad de monedas: {coinsDensity}%");
         return randomValue < coinsDensity;
     }
 

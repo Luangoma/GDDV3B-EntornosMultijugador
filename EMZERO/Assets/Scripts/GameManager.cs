@@ -336,12 +336,6 @@ public class GameManager : NetworkBehaviour
         if (AllReady())
         {
             canJoin = true;
-            Debug.Log("All clients are ready. Starting game...");
-            Debug.Log("Estados de ready antes de iniciar partida:");
-            foreach (var kvp in readyStates)
-                Debug.Log($"Client {kvp.Key} ready: {kvp.Value}");
-
-            Debug.Log("All clients are ready. Starting game...");
             nm.SceneManager.OnLoadEventCompleted += OnNetworkSceneLoaded;
             nm.SceneManager.LoadScene("GameScene", LoadSceneMode.Single);
         }

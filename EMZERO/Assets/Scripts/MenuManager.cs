@@ -13,6 +13,10 @@ public class MenuManager : MonoBehaviour
     public List<Button> atrasButtons;
     private GameManager gm;
     private NetworkManager nm;
+    public GameObject botonListoObjClient;
+    public GameObject botonListoObjHost;
+    private Button botonListoHost;
+    private Button botonListoClient;
     /*
      * PantallaMenuInicio = 0,
      * PantallaClienteHostSeleccion = 1,
@@ -42,6 +46,14 @@ public class MenuManager : MonoBehaviour
     }
     public void Start()
     {
+        // Obtener boton listo para que no se puedan crear mas jugadores de los que se han seleccionado
+        botonListoClient = botonListoObjClient.GetComponent<Button>();
+        botonListoHost = botonListoObjHost.GetComponent<Button>();
+
+        // Suscribirme a delegados
+        botonListoClient.onClick.AddListener(OnMyButtonClientClick);
+        botonListoHost.onClick.AddListener(OnMyButtonHostClick);
+
         gm = GameManager.Instance;
         nm = NetworkManager.Singleton;
         foreach (var item in pantallas) { item.gameObject.SetActive(false); }
@@ -55,7 +67,16 @@ public class MenuManager : MonoBehaviour
         
         ComprobarOnline();
     }
-    #endregion  
+
+    private void OnMyButtonClientClick()
+    {
+        botonListoClient.interactable = false; // Desactivar el botón para evitar múltiples clics
+    }
+    private void OnMyButtonHostClick()
+    {
+        botonListoHost.interactable = false; // Desactivar el botón para evitar múltiples clics
+    }   
+    #endregion
     #region Navegacion entre pantallas
     public void ComprobarOnline()
     {
