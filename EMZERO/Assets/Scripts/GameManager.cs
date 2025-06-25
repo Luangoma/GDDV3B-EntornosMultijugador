@@ -186,13 +186,10 @@ public class GameManager : NetworkBehaviour
             timeExpired = false;
 
             mapSeed.Value = UnityEngine.Random.Range(MINSEED, MAXSEED);
-            //foreach (var item in readyStates.Keys) { readyStates[item] = false; }
             readyStates.Clear(); // Limpiar los estados de ready para reiniciar el juego
             // Reiniciar el contador de monedas y zombies
             humanNumber.Value = 0;
             zombieNumber.Value = 0;
-            //timeExpired = false;
-            //isGameOver.Value = false;
             densidad.Value = -5f; // Reiniciar la densidad de monedas
             // Destruir el level manager si existe
             LevelManager lm = FindObjectOfType<LevelManager>();
@@ -200,7 +197,6 @@ public class GameManager : NetworkBehaviour
             {
                 Destroy(lm.gameObject);
             }
-
             // Cargar la escena del menu principal para todos si al menos hay otro cliente conectado
             if (nm.ConnectedClientsIds.Count > 1)
             {
@@ -214,24 +210,6 @@ public class GameManager : NetworkBehaviour
                 NetworkManager.Singleton.Shutdown();    // Si el host deja la partida se desconecta de la red
                 SceneManager.LoadScene("MenuScene"); // Cambia "MainMenu" por el nombre de tu escena principal
             }
-            
-
-            //Despawnear a todos los jugadores
-            //foreach (var clientId in nm.ConnectedClientsIds)
-            //{
-            //    if (nm.SpawnManager.SpawnedObjects.TryGetValue(clientId, out NetworkObject obj))
-            //    {
-            //        obj.Despawn();
-            //    }
-            //}
-            // Despawnear objetos de red que no sean jugadores
-            //foreach (var obj in FindObjectsOfType<NetworkObject>())
-            //{
-            //    if (obj != null && obj.IsSpawned && obj.gameObject.tag != "Player")
-            //    {
-            //        obj.Despawn();
-            //    }
-            //}
         }
     }
     private void HandleClientConnected(ulong clientId)
@@ -243,11 +221,7 @@ public class GameManager : NetworkBehaviour
     public void SpawnClient(ulong clientId, Vector3 spawnPos, GameObject prefab)
     {
         if (!IsServer) return; // Solo el servidor debe spawnear
-
         Debug.Log($"Spawning {clientId} player");
-
-        // Solo el servidor ejecuta esto
-
         GameObject player = Instantiate(prefab, spawnPos, Quaternion.identity);
         player.GetComponent<NetworkObject>().SpawnAsPlayerObject(clientId);
     }
@@ -320,7 +294,6 @@ public class GameManager : NetworkBehaviour
                 aux++;
             }
 
-            //Debug.LogError("GameManager no encontrado en la nueva escena.");
         }
         nm.SceneManager.OnLoadEventCompleted -= OnNetworkSceneLoaded;
     }
@@ -370,8 +343,6 @@ public class GameManager : NetworkBehaviour
     public void ConvertHuman(NetworkObject p)
     {
         if (!IsServer) return;
-        // humanNumber.Value--;      // Esto ya lo hace el propio humano en el despawn
-        // Destruir el humano
         // Guardarme sus coordenadas y rotacion
         Debug.Log("ConvertHuman iniciado - Jugador: " + p.OwnerClientId);
 
@@ -380,9 +351,7 @@ public class GameManager : NetworkBehaviour
         PlayerController humanController = p.GetComponent<PlayerController>();
         if (humanController != null && !humanController.isZombie)
         {
-            //Debug.Log($"Convirtiendo humano {p.OwnerClientId} a zombie...");
             lastConvertedHumanId = p.OwnerClientId;
-            //Debug.Log($"Último humano : {lastConvertedHumanId}");
 
             Vector3 position = p.transform.position;
             Quaternion rotation = p.transform.rotation;
@@ -398,7 +367,6 @@ public class GameManager : NetworkBehaviour
             {
                 zombieController.isZombie = true;
                 zombieController.WasOriginallyZombie.Value = false;
-                //Debug.Log($"Nuevo zombie {clientId} - WasOriginallyZombie: {zombieController.WasOriginallyZombie.Value}");
 
                 NotifyLastClientRpc(clientId, new ClientRpcParams
                 {
@@ -442,16 +410,6 @@ public class GameManager : NetworkBehaviour
     [ServerRpc(RequireOwnership = false)]
     public void NotifyPlayerTransformedServerRpc()
     {
-        //Debug.Log("NotifyPlayerTransformedServerRpc llamado");
-
-
-        //if (becameZombie)
-        //{
-        //    humanNumber.Value--;
-        //    zombieNumber.Value++;
-        //    Debug.Log($"Se transform  en zombie. Humanos: {humanNumber.Value}, Zombies: {zombieNumber.Value}");
-        //}
-
         CheckWinConditionsServerRpc();
     }
 
@@ -470,10 +428,7 @@ public class GameManager : NetworkBehaviour
     public void NotifyTimeExpiredServerRpc(ServerRpcParams rpcParams = default)
     {
         if (timeExpired || isGameOver.Value) return;
-
         timeExpired = true;
-        //isGameOver.Value = true;
-        //EndGame(VictoryType.HumanVictory, "¡Los Humanos ganan! Sobrevivieron el tiempo límite");
         CheckWinConditionsServerRpc();
     }
 
@@ -555,12 +510,9 @@ public class GameManager : NetworkBehaviour
         // Notificar primero al último humano convertido (si existe)
         if (lastConvertedHumanId.HasValue)
         {
-            //Debug.Log($"Procesando último humano convertido: {lastConvertedHumanId}");
             //Si hay ultimo humano convertido
             if (lastConvertedHumanId != null)
             {
-                //Debug.Log($"ENVIANDO DERROTA al último humano: {lastConvertedHumanId.Value}");
-
                 //Se le dice solo al ultimo humano que ha perdido
                 EndGameForPlayer(VictoryType.Loss,
                     "¡Derrota! Fuiste el último humano en ser convertido",
@@ -582,8 +534,6 @@ public class GameManager : NetworkBehaviour
                 string message = player.WasOriginallyZombie.Value
                     ? "¡VICTORIA TOTAL! Eliminaste a todos los humanos"
                     : "¡VICTORIA PARCIAL! Fuiste convertido pero tu equipo ganó";
-
-                //Debug.Log($"Enviando victoria a zombie {client.Key}: {message}");
                 EndGameForPlayer(VictoryType.ZombieVictory, message, client.Key);
             }
         }
@@ -656,11 +606,7 @@ public class GameManager : NetworkBehaviour
         // Obtener el PlayerController local
         PlayerController pc = NetworkManager.Singleton.SpawnManager.GetLocalPlayerObject()?.GetComponent<PlayerController>();
         if (pc == null) return;
-
         string finalMessage = message.ToString();
-
-        //TryDespawnServerRpc(pc.NetworkObjectId); // Intentar despawnear el jugador local
-
         // Mostrar el panel de fin de juego
         FindObjectOfType<LevelManager>()?.ShowGameOverPanel(finalMessage);
     }
@@ -698,7 +644,6 @@ public class GameManager : NetworkBehaviour
             {
                 backupPlayerNames.TryAdd(id, newname);
             }
-            //nameSelector.GetNameFromServerServerRpc(true, newnameF);
         }
     }
     [ServerRpc(RequireOwnership = false)]
@@ -715,6 +660,5 @@ public class GameManager : NetworkBehaviour
             backupPlayerNames.Add(id, newname);
         }
         LastGeneratedName.Value = newname;
-        //nameSelector.GetNameFromServerServerRpc(true, netName);
     }
 }

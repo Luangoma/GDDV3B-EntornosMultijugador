@@ -41,7 +41,7 @@ public class MenuManager : MonoBehaviour
     #region NetworkBehaviour
     public void Awake()
     {
-        Time.timeScale = 1f; // Asegúrate de que el tiempo está restaurado al cargar la escena
+        Time.timeScale = 1f; // Asegï¿½rate de que el tiempo estï¿½ restaurado al cargar la escena
         actual = pantallas[screens[0]];
     }
     public void Start()
@@ -70,11 +70,11 @@ public class MenuManager : MonoBehaviour
 
     private void OnMyButtonClientClick()
     {
-        botonListoClient.interactable = false; // Desactivar el botón para evitar múltiples clics
+        botonListoClient.interactable = false; // Desactivar el botï¿½n para evitar mï¿½ltiples clics
     }
     private void OnMyButtonHostClick()
     {
-        botonListoHost.interactable = false; // Desactivar el botón para evitar múltiples clics
+        botonListoHost.interactable = false; // Desactivar el botï¿½n para evitar mï¿½ltiples clics
     }   
     #endregion
     #region Navegacion entre pantallas
@@ -99,8 +99,6 @@ public class MenuManager : MonoBehaviour
     public void StartGameFromMenuScene()
     {
         SceneManager.LoadScene("GameScene"); // Cambia "MainScene" por el nombre de tu escena principal
-        //actual = EasyP(PantallaEnum.Pantallaclientehostseleccion);
-        //actual.gameObject.SetActive(true);
     }
     public void CambiarEscenaAdelante()
     {
@@ -175,21 +173,6 @@ public class MenuManager : MonoBehaviour
     }
     public void CloseConections()
     {
-        switch (conxion)
-        {
-            case GameConnection.Host:
-                // Poner funcion para desconectar
-                //nm.StartHost();
-                break;
-            case GameConnection.Cliente:
-                // Poner funcion para desconectar
-                //nm.StartClient();
-                break;
-            case GameConnection.Servidor:
-                // Poner funcion para desconectar
-                //nm.StartServer();
-                break;
-        }
         nm.Shutdown();
     }
     #endregion

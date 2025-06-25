@@ -217,11 +217,11 @@ public class PlayerController : NetworkBehaviour
     {
         // Importante, este codigo no requiere de if (IsOwner) porque se ejecuta en todos los clientes,
         // para que el texto de cada cliente mire a la camara de cada cliente y se vea recto en su cliente
-        // Hacer que el nombre mire siempre a la cámara
+        // Hacer que el nombre mire siempre a la cï¿½mara
         if (playerNameUIInstance != null && Camera.main != null)
         {
             playerNameUIInstance.transform.LookAt(Camera.main.transform);
-            playerNameUIInstance.transform.Rotate(0, 180, 0); // Para que no salga al revés
+            playerNameUIInstance.transform.Rotate(0, 180, 0); // Para que no salga al revï¿½s
         }
     }
     void Update()
@@ -301,7 +301,6 @@ public class PlayerController : NetworkBehaviour
         if (!IsServer) return;
         if (!isZombie) // Solo los humanos pueden recoger monedas
         {
-            //gameManager.collectedCoins.Value++;
             UpdateCoinUI(gameManager.collectedCoins.Value);
 
                         RequestCoinCollectionServerRpc();
@@ -328,17 +327,6 @@ public class PlayerController : NetworkBehaviour
             coinText.text = $"{coinCount}";
         }
     }
-
-    /*public void UpdateTimeUI(float timeCount) {
-        if (timeText != null)
-        {
-            // Convertir a minutos y segundos
-            int minutes = Mathf.FloorToInt(timeCount / 60f);
-            int seconds = Mathf.FloorToInt(timeCount % 60f);
-            timeText.text = $"{minutes:00}:{seconds:00}";
-        }
-    }*/
-
 
     // Actualizar del movimiento del personaje al servidor en tiempo real
     [ServerRpc]
@@ -372,7 +360,6 @@ public class PlayerController : NetworkBehaviour
     {
         var randomPosition = GetRandomPositionOnPlane();
         transform.position = randomPosition;
-        //Position.Value = randomPosition;
     }
 }
 

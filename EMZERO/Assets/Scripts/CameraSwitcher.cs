@@ -2,49 +2,40 @@ using UnityEngine;
 
 public class CameraSwitcher : MonoBehaviour
 {
-    public Camera mainCamera; // La cámara principal
+    public Camera mainCamera; // La cï¿½mara principal
     public KeyCode switchKey = KeyCode.C; // Tecla para alternar la vista
-    public float transitionSpeed = 2f; // Velocidad de la transición
+    public float transitionSpeed = 2f; // Velocidad de la transiciï¿½n
     public float topDownHeight = 20f; // Altura para la vista cenital
-    public float topDownRotation = 90f; // Rotación para la vista cenital (mirando hacia abajo)
+    public float topDownRotation = 90f; // Rotaciï¿½n para la vista cenital (mirando hacia abajo)
 
     private CameraController cameraController; // Referencia al script CameraController
-    private Vector3 targetPosition; // Posición objetivo para la cámara
-    private Quaternion targetRotation; // Rotación objetivo para la cámara
-    private bool isTopDownView = false; // Estado actual de la vista
-    private bool isTransitioning = false; // Indica si la cámara está en transición
+    private bool isTopDownView; // Estado actual de la vista
+    private bool isTransitioning; // Indica si la cï¿½mara estï¿½ en transiciï¿½n
+    private Vector3 targetPosition; // Posiciï¿½n objetivo para la cï¿½mara
+    private Quaternion targetRotation; // Rotaciï¿½n objetivo para la cï¿½mara
 
-    void Start()
+    private void Start()
     {
-        // Obtiene el componente CameraController de la cámara principal
+        // Obtiene el componente CameraController de la cï¿½mara principal
         if (mainCamera != null)
         {
             cameraController = mainCamera.GetComponent<CameraController>();
 
-            if (cameraController == null)
-            {
-                Debug.LogWarning("CameraController no encontrado en la cámara principal.");
-            }
+            if (cameraController == null) Debug.LogWarning("CameraController no encontrado en la cï¿½mara principal.");
         }
         else
         {
-            Debug.LogError("Referencia a la cámara principal no asignada.");
+            Debug.LogError("Referencia a la cï¿½mara principal no asignada.");
         }
     }
 
-    void LateUpdate()
+    private void LateUpdate()
     {
         if (mainCamera == null) return;
 
-        if (Input.GetKeyDown(switchKey) && !isTransitioning)
-        {
-            ToggleCameraView();
-        }
+        if (Input.GetKeyDown(switchKey) && !isTransitioning) ToggleCameraView();
 
-        if (isTransitioning)
-        {
-            PerformTransition();
-        }
+        if (isTransitioning) PerformTransition();
     }
 
     private void ToggleCameraView()
@@ -55,7 +46,7 @@ public class CameraSwitcher : MonoBehaviour
         {
             Debug.Log("Cambiando a cenital...");
 
-            // Calcula la posición y rotación para la vista cenital
+            // Calcula la posiciï¿½n y rotaciï¿½n para la vista cenital
             targetPosition = mainCamera.transform.position + Vector3.up * topDownHeight;
             targetRotation = Quaternion.Euler(topDownRotation, mainCamera.transform.eulerAngles.y, 0);
 
@@ -66,7 +57,7 @@ public class CameraSwitcher : MonoBehaviour
         {
             Debug.Log("Volviendo a tercera persona...");
 
-            // Calcula la posición y rotación para la vista de tercera persona
+            // Calcula la posiciï¿½n y rotaciï¿½n para la vista de tercera persona
             targetPosition = mainCamera.transform.position - Vector3.up * topDownHeight;
             targetRotation = Quaternion.Euler(0, mainCamera.transform.eulerAngles.y, 0);
 
@@ -74,7 +65,7 @@ public class CameraSwitcher : MonoBehaviour
             EnableCameraController(true);
         }
 
-        // Inicia la transición
+        // Inicia la transiciï¿½n
         isTransitioning = true;
     }
 
@@ -92,19 +83,14 @@ public class CameraSwitcher : MonoBehaviour
             Time.deltaTime * transitionSpeed
         );
 
-        // Comprueba si la cámara llegó al objetivo
-        if (Vector3.Distance(mainCamera.transform.position, targetPosition) < 0.1f)
-        {
-            isTransitioning = false; // Finaliza la transición
-        }
+        // Comprueba si la cï¿½mara llegï¿½ al objetivo
+        if (Vector3.Distance(mainCamera.transform.position, targetPosition) <
+            0.1f) isTransitioning = false; // Finaliza la transiciï¿½n
     }
 
     // Activa o desactiva el script CameraController
     private void EnableCameraController(bool enable)
     {
-        if (cameraController != null)
-        {
-            cameraController.enabled = enable;
-        }
+        if (cameraController != null) cameraController.enabled = enable;
     }
 }
