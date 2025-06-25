@@ -78,7 +78,8 @@ public class LevelManager : MonoBehaviour
         Time.timeScale = 1f; // Asegurarse de que el tiempo no este detenido
         if (levelBuilder != null)
         {
-            levelBuilder.Build(gm.densidad.Value, gm.GetSeed());
+            var numberOfRooms = gm.humanNumber.Value + gm.zombieNumber.Value;
+            levelBuilder.Build(gm.densidad.Value, gm.GetSeed(),numberOfRooms);
             SpawnPoints = levelBuilder.GetSpawnPoints();
             gm.SetTotalCoins(levelBuilder.GetCoinsGenerated());
         }
@@ -94,7 +95,8 @@ public class LevelManager : MonoBehaviour
         Time.timeScale = 1f; // Asegurarse de que el tiempo no este detenido
         if (levelBuilder != null)
         {
-            levelBuilder.Build(gm.densidad.Value, gm.GetSeed());
+            var numberOfRooms = gm.humanNumber.Value + gm.zombieNumber.Value;
+            levelBuilder.Build(gm.densidad.Value, gm.GetSeed(), numberOfRooms);
             SpawnPoints = levelBuilder.GetSpawnPoints();
             gm.SetTotalCoins(levelBuilder.GetCoinsGenerated());
         }

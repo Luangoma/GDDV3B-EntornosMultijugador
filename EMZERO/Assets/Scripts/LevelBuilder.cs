@@ -36,7 +36,7 @@ public class LevelBuilder : MonoBehaviour
 
     [Header("Room Settings")]
     [Tooltip("N�mero total de salas")]
-    [SerializeField] private int numberOfRooms = 4;
+    private int numberOfRooms = 4;
 
     [Tooltip("Ancho de cada sala")]
     [SerializeField] private int roomWidth = 5;
@@ -65,13 +65,13 @@ public class LevelBuilder : MonoBehaviour
         GameObject parentObject = new GameObject("RoomsParent");
         roomParent = parentObject.transform;
     }
-
     #endregion
 
     #region World building methods
 
-    public void Build(float valor, int seed)
+    public void Build(float valor, int seed, int nOfRooms)
     {
+        numberOfRooms = nOfRooms;
         coinsDensity = valor;
         Random.InitState(seed);
         CreateRooms(roomWidth, roomLength, numberOfRooms);

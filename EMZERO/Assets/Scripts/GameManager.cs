@@ -52,56 +52,6 @@ public class GameManager : NetworkBehaviour
             }
         }
     }
-    public struct KeyValuePairData : INetworkSerializable, IEquatable<KeyValuePairData>
-    {
-        public ulong Key;
-        public FixedString32Bytes Value;
-
-        public bool Equals(KeyValuePairData other)
-        {
-            return Key == other.Key && Value == other.Value;
-        }
-
-        public void NetworkSerialize<T>(BufferSerializer<T> serializer) where T : IReaderWriter
-        {
-            serializer.SerializeValue(ref Key);
-            serializer.SerializeValue(ref Value);
-        }
-    }
-    public class SharedDictionary : NetworkBehaviour
-    {
-        public NetworkList<KeyValuePairData> SharedData;
-
-        private void Awake()
-        {
-            SharedData = new NetworkList<KeyValuePairData>();
-        }
-
-        [ServerRpc]
-        public void AddEntryServerRpc(ulong key, string value)
-        {
-            SharedData.Add(new KeyValuePairData { Key = key, Value = value });
-        }
-
-        public string GetValue(ulong key)
-        {
-            foreach (var item in SharedData)
-            {
-                if (item.Key == key)
-                    return item.Value.ToString();
-            }
-            return null;
-        }
-        public List<string> Values()
-        {
-            List<string> values = new List<string>();
-            for (int i = 0; i < SharedData.Count; i++)
-            {
-                values.Add(SharedData[i].Value.ToString());
-            }
-            return values;
-        }
-    }
     #endregion
     #region Variables Compartidas
     // Menu
@@ -116,7 +66,6 @@ public class GameManager : NetworkBehaviour
     public NetworkVariable<int> collectedCoins = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> ZombiesDesconectados = new(default, rpEveryone, wpServer);
     public NetworkVariable<int> HumanosDesconectados = new(default, rpEveryone, wpServer);
-
     // Data builder
     public NetworkVariable<int> mapSeed = new(default, rpEveryone, wpServer);
     // Other xD
@@ -622,8 +571,6 @@ public class GameManager : NetworkBehaviour
         isGameOver.Value = true;
         EndGameClientRpc(message);
     }
-
-    #endregion
     [ServerRpc(RequireOwnership = false)]
     public void SetNewNamePlayerNamesServerRpc(FixedString32Bytes newnameF, ServerRpcParams serverRpcParams = default)
     {
@@ -661,4 +608,5 @@ public class GameManager : NetworkBehaviour
         }
         LastGeneratedName.Value = newname;
     }
+    #endregion
 }
