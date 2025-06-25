@@ -177,7 +177,7 @@ public class GameManager : NetworkBehaviour
     #endregion
     #region Other methods
 
-    [ServerRpc(RequireOwnership = false)]
+    [ServerRpc]
     public void ResetConvinientDataServerRpc()
     {
         if (nm.IsServer)

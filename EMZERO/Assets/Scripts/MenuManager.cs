@@ -70,6 +70,9 @@ public class MenuManager : MonoBehaviour
             {
                 CambioPantalla(4);
             }
+            historial.Push(actual);
+            pantallas[5].SetActive(true);
+
         }
     }
     public void StartGameFromMenuScene()
