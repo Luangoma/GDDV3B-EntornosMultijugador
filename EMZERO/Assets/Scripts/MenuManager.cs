@@ -15,8 +15,11 @@ public class MenuManager : MonoBehaviour
     private NetworkManager nm;
     public GameObject botonListoObjClient;
     public GameObject botonListoObjHost;
+    public GameObject botonReturnObjClient;
+    public GameObject botonReturnObjHost;
     private Button botonListoHost;
     private Button botonListoClient;
+    private Button ReturnButton;
     /*
      * PantallaMenuInicio = 0,
      * PantallaClienteHostSeleccion = 1,
@@ -71,10 +74,12 @@ public class MenuManager : MonoBehaviour
     private void OnMyButtonClientClick()
     {
         botonListoClient.interactable = false; // Desactivar el bot�n para evitar m�ltiples clics
+        botonReturnObjClient.SetActive(false);
     }
     private void OnMyButtonHostClick()
     {
         botonListoHost.interactable = false; // Desactivar el bot�n para evitar m�ltiples clics
+        botonReturnObjHost.SetActive(false);
     }   
     #endregion
     #region Navegacion entre pantallas
